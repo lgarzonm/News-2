@@ -216,7 +216,11 @@ st.markdown(f"""
 # Refresh button — sits below header, full width via CSS
 if st.button("🔄 Refresh News"):
     with st.spinner("Fetching latest articles and generating summaries…"):
-        raw_results = fetch_all_categories()
+        try:
+            raw_results = fetch_all_categories()
+        except RuntimeError as e:
+            st.error(f"News fetch failed: {e}")
+            st.stop()
 
         # Flatten to a single list for one batched LLM call
         all_articles = []
@@ -224,7 +228,10 @@ if st.button("🔄 Refresh News"):
             all_articles.extend(articles)
 
         if all_articles:
-            enrich_articles(all_articles)
+            try:
+                enrich_articles(all_articles)
+            except RuntimeError as e:
+                st.warning(f"AI summaries unavailable: {e}. Showing articles without summaries.")
 
         # Rebuild results dict with enriched articles (already mutated in-place)
         st.session_state["results"] = raw_results

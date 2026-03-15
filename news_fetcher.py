@@ -34,8 +34,8 @@ def _is_trusted(source_url: str) -> bool:
 def _build_query(keyword: str, category: str) -> str:
     geo = GEO_PREFIX.get(category)
     if geo:
-        return f'"{keyword}" AND ({geo})'
-    return f'"{keyword}"'
+        return f'{keyword} AND ({geo})'
+    return keyword
 
 
 def fetch_articles_for_category(category: str, window_start: datetime) -> list[dict]:
@@ -44,7 +44,8 @@ def fetch_articles_for_category(category: str, window_start: datetime) -> list[d
     Returns a list of article dicts (max 2).
     """
     keywords = CATEGORIES[category]
-    from_param = window_start.isoformat()
+    # NewsAPI expects UTC in Z-suffix format, not +00:00
+    from_param = window_start.strftime("%Y-%m-%dT%H:%M:%SZ")
     found = []
 
     for keyword in keywords:
@@ -66,11 +67,13 @@ def fetch_articles_for_category(category: str, window_start: datetime) -> list[d
 
         try:
             response = _client.get_everything(**kwargs)
-        except Exception:
-            continue
+        except Exception as e:
+            raise RuntimeError(f"NewsAPI request failed for [{category}] keyword '{keyword}': {e}") from e
 
         if response.get("status") != "ok":
-            continue
+            code = response.get("code", "unknown")
+            msg  = response.get("message", "no message")
+            raise RuntimeError(f"NewsAPI error for [{category}]: {code} — {msg}")
 
         for article in response.get("articles", []):
             if len(found) >= 2:
