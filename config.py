@@ -5,6 +5,7 @@ import streamlit as st
 # ---------------------------------------------------------------------------
 NEWSAPI_KEY = st.secrets["NEWSAPI_KEY"]
 ANTHROPIC_API_KEY = st.secrets["ANTHROPIC_API_KEY"]
+GNEWS_API_KEY = st.secrets.get("GNEWS_API_KEY", "")
 
 # ---------------------------------------------------------------------------
 # Categories & Keywords
