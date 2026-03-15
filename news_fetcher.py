@@ -96,6 +96,7 @@ def _fetch_via_newsapi(category: str, window_start: datetime) -> list[dict]:
         raise RuntimeError(f"{code}: {msg}")
 
     found = []
+    seen_urls: set[str] = set()
     for raw in response.get("articles", []):
         if len(found) >= 2:
             break
@@ -105,8 +106,11 @@ def _fetch_via_newsapi(category: str, window_start: datetime) -> list[dict]:
             continue
         if not url or url == "https://removed.com":
             continue
+        if url in seen_urls:
+            continue
         if not _is_within_24h(raw.get("publishedAt", ""), window_start):
             continue
+        seen_urls.add(url)
         found.append(_normalise_article(raw, category))
 
     return found
@@ -142,6 +146,7 @@ def _fetch_via_gnews(category: str, window_start: datetime) -> list[dict]:
     from_param = window_start.strftime("%Y-%m-%dT%H:%M:%SZ")
     geo = GEO_PREFIX.get(category)
     found = []
+    seen_urls: set[str] = set()
 
     for keyword in CATEGORIES[category]:
         if len(found) >= 2:
@@ -158,8 +163,11 @@ def _fetch_via_gnews(category: str, window_start: datetime) -> list[dict]:
             url   = raw.get("url", "")
             if not title or not url:
                 continue
+            if url in seen_urls:
+                continue
             if not _is_within_24h(raw.get("publishedAt", ""), window_start):
                 continue
+            seen_urls.add(url)
             found.append(_normalise_article(raw, category))
 
     return found
@@ -169,25 +177,64 @@ def _fetch_via_gnews(category: str, window_start: datetime) -> list[dict]:
 # Public interface
 # ---------------------------------------------------------------------------
 
+_RATE_LIMIT_MARKERS = (
+    "ratelimited", "429", "426", "401",
+    "apikeydisabled", "apikeyexhausted", "maximumresultsreached",
+)
+
+
+def _is_rate_limit_error(err_lower: str) -> bool:
+    return any(m in err_lower for m in _RATE_LIMIT_MARKERS)
+
+
 def fetch_articles_for_category(category: str, window_start: datetime) -> list[dict]:
     """
-    Try NewsAPI first. If rate-limited or unavailable, fall back to GNews.
+    Try NewsAPI first. If rate-limited or quota-exhausted, fall back to GNews.
+    Raises RuntimeError with a clear message on total failure.
     """
+    newsapi_err = None
     try:
         return _fetch_via_newsapi(category, window_start)
     except RuntimeError as e:
+        newsapi_err = e
         err = str(e).lower()
-        # Fall back to GNews on rate limit or auth errors
-        if "ratelimited" in err or "rateLimited" in err or "429" in err or "401" in err or "apikeydisabled" in err:
-            return _fetch_via_gnews(category, window_start)
-        raise
+        if not _is_rate_limit_error(err):
+            raise  # Non-rate-limit errors bubble up immediately
+
+    # NewsAPI rate-limited → try GNews
+    try:
+        return _fetch_via_gnews(category, window_start)
+    except RuntimeError as gnews_err:
+        raise RuntimeError(
+            f"API quota exhausted — NewsAPI: {newsapi_err}; GNews: {gnews_err}"
+        ) from gnews_err
 
 
 def fetch_all_categories() -> dict[str, list[dict]]:
-    """Fetch articles for all 11 categories — 11 API calls total."""
+    """
+    Fetch articles for all 11 categories — 11 API calls total.
+    Per-category errors are recorded as {"error": <message>} entries
+    so a single failing category never aborts the entire run.
+    """
     window_start = datetime.now(timezone.utc) - timedelta(hours=24)
-    results = {}
+    results: dict[str, list[dict]] = {}
+    errors: dict[str, str] = {}
+
     for category in CATEGORIES:
-        articles = fetch_articles_for_category(category, window_start)
-        results[category] = articles
+        try:
+            results[category] = fetch_articles_for_category(category, window_start)
+        except RuntimeError as e:
+            results[category] = []
+            errors[category] = str(e)
+
+    # Propagate any quota-exhausted errors so app.py can surface them clearly
+    if errors:
+        # Check if all categories failed (full quota exhaustion)
+        if len(errors) == len(CATEGORIES):
+            sample = next(iter(errors.values()))
+            raise RuntimeError(f"All categories failed. Sample error: {sample}")
+        # Otherwise store partial errors in results for per-category display
+        for category, msg in errors.items():
+            results[category] = [{"_error": msg}]
+
     return results

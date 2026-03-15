@@ -115,16 +115,22 @@ Your browser should open automatically at `http://localhost:8501`.
 
 ## Phase 3 — Debugging (If Needed)
 
-Use Claude Code to fix issues as they come up. Here are the most likely ones and the exact prompts to use:
+The following failure modes have been **pre-handled** in the codebase. If you hit them, the app should degrade gracefully rather than crash:
 
-| Issue | Prompt to give Claude Code |
+| Issue | How it's handled |
 |---|---|
-| App crashes on load | `"The app is crashing with this error: [paste error]. Please fix it."` |
-| No articles showing for a category | `"The [category name] category is returning 0 results. Review the keyword list in config.py and broaden the search query logic in news_fetcher.py."` |
-| Articles older than 24h appearing | `"Some articles are outside the 24h window. Tighten the publishedAt filter in news_fetcher.py and make sure the from= parameter is being passed correctly to NewsAPI."` |
-| LLM call failing | `"The Claude API call in llm_processor.py is failing with: [paste error]. Please debug and fix."` |
-| UI looks off / styling broken | `"The CSS styling is not applying correctly. Review the st.markdown style block in app.py and fix the navy/white/blue palette."` |
-| CSV download not working | `"The CSV download button is not generating the file correctly. Fix the download_button logic in app.py."` |
+| **No articles for a category** | Category shows "No recent articles found" — other categories still load. Broaden keywords in `config.py` if persistent. |
+| **Articles older than 24h** | Double-enforced: `from=` API parameter + Python `_is_within_24h()` post-filter in `news_fetcher.py`. |
+| **LLM JSON parse failure** | `llm_processor.py` strips markdown fences, then tries regex extraction of `[...]` block, then falls back to "Summary unavailable." — no crash. |
+| **NewsAPI rate limit (429/426)** | Auto-falls back to GNews API. If GNews also fails, a clear "quota exhausted" banner is shown in the UI. |
+| **Single category fetch failure** | Per-category error isolation — one bad category shows an error card; all other categories load normally. |
+| **CSS not applying** | The `<style>` block is injected at the very top of `app.py` before any other UI elements. |
+| **Duplicate articles** | URL-based deduplication within each category fetch (both NewsAPI and GNews paths). |
+
+If you still hit unexpected issues, use Claude Code with:
+```
+"The app is showing this error: [paste error]. Please fix it."
+```
 
 ---
 
@@ -218,11 +224,20 @@ To make changes after deployment:
 4. Streamlit Cloud auto-redeploys within ~1 minute
 
 ### If NewsAPI free tier runs out (100 req/day)
-Ask Claude Code:
-```
-"Switch the news fetcher to use GNews API instead of NewsAPI. 
- The GNews docs are at https://gnews.io/docs. Keep the same interface."
-```
+GNews fallback is **already built in** — the app automatically switches to GNews when NewsAPI returns a rate-limit error. To activate it:
+1. Get a free GNews API key at [gnews.io](https://gnews.io)
+2. Add it to `.streamlit/secrets.toml`:
+   ```toml
+   GNEWS_API_KEY = "your_gnews_key_here"
+   ```
+3. Add it to the Streamlit Cloud secrets dashboard (same as the other keys)
+
+No code changes needed — the fallback is already wired up in `news_fetcher.py`.
+
+### Known operational gaps (no alerting built-in)
+- **Quota monitoring:** There is no automatic alert when the 100 req/day NewsAPI limit is reached. You'll see the "quota exhausted" banner in the UI when it happens.
+- **Error logging:** Failures are shown in the UI but not logged to an external service. If the app silently fails overnight, you won't be notified.
+- **Duplicate articles across runs:** Each run is independent — duplicates between two different refresh clicks are expected and by design.
 
 ---
 
