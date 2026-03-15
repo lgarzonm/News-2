@@ -116,44 +116,51 @@ def _fetch_via_newsapi(category: str, window_start: datetime) -> list[dict]:
 # GNews fetcher (fallback)
 # ---------------------------------------------------------------------------
 
+def _gnews_single_keyword(keyword: str, geo: str | None, from_param: str) -> list[dict]:
+    """One GNews request for a single keyword (GNews rejects long boolean queries)."""
+    q = f"{keyword} {geo}" if geo else keyword
+    params = {
+        "q":      q,
+        "from":   from_param,
+        "sortby": "publishedAt",
+        "max":    5,
+        "lang":   "en",
+        "token":  GNEWS_API_KEY,
+    }
+    resp = requests.get(GNEWS_BASE_URL, params=params, timeout=10)
+    resp.raise_for_status()
+    data = resp.json()
+    if "errors" in data:
+        raise RuntimeError(f"GNews error: {data['errors']}")
+    return data.get("articles", [])
+
+
 def _fetch_via_gnews(category: str, window_start: datetime) -> list[dict]:
     if not GNEWS_API_KEY:
         raise RuntimeError("GNEWS_API_KEY not set in secrets")
 
-    # GNews uses 'from' in RFC3339 / ISO8601 with Z suffix
     from_param = window_start.strftime("%Y-%m-%dT%H:%M:%SZ")
-    query = _build_keyword_query(category)
-
-    params = {
-        "q":      query,
-        "from":   from_param,
-        "sortby": "publishedAt",
-        "max":    10,
-        "lang":   "en",
-        "token":  GNEWS_API_KEY,
-    }
-
-    try:
-        resp = requests.get(GNEWS_BASE_URL, params=params, timeout=10)
-        resp.raise_for_status()
-        data = resp.json()
-    except Exception as e:
-        raise RuntimeError(f"GNews request failed: {e}") from e
-
-    if "errors" in data:
-        raise RuntimeError(f"GNews error: {data['errors']}")
-
+    geo = GEO_PREFIX.get(category)
     found = []
-    for raw in data.get("articles", []):
+
+    for keyword in CATEGORIES[category]:
         if len(found) >= 2:
             break
-        title = raw.get("title", "")
-        url   = raw.get("url", "")
-        if not title or not url:
-            continue
-        if not _is_within_24h(raw.get("publishedAt", ""), window_start):
-            continue
-        found.append(_normalise_article(raw, category))
+        try:
+            articles = _gnews_single_keyword(keyword, geo, from_param)
+        except Exception as e:
+            raise RuntimeError(f"GNews request failed: {e}") from e
+
+        for raw in articles:
+            if len(found) >= 2:
+                break
+            title = raw.get("title", "")
+            url   = raw.get("url", "")
+            if not title or not url:
+                continue
+            if not _is_within_24h(raw.get("publishedAt", ""), window_start):
+                continue
+            found.append(_normalise_article(raw, category))
 
     return found
 
