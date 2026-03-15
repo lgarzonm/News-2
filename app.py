@@ -165,7 +165,7 @@ def _render_article_card(article: dict) -> None:
     title    = article.get("title", "")
     source   = article.get("source", "")
     pub      = _format_timestamp(article.get("published_at", ""))
-    summary  = article.get("summary", "")
+    summary  = article.get("summary", "") or "Summary unavailable."
     sentiment = article.get("sentiment", "Neutral")
     url      = article.get("url", "#")
 
@@ -219,19 +219,33 @@ if st.button("🔄 Refresh News"):
         try:
             raw_results = fetch_all_categories()
         except RuntimeError as e:
-            st.error(f"News fetch failed: {e}")
+            err_msg = str(e).lower()
+            if "quota exhausted" in err_msg or "429" in err_msg or "426" in err_msg or "ratelimited" in err_msg:
+                st.error(
+                    "⚠️ NewsAPI daily quota exhausted (100 req/day on free tier). "
+                    "GNews fallback also unavailable. Please try again tomorrow or "
+                    "add a GNEWS_API_KEY to your secrets."
+                )
+            else:
+                st.error(f"News fetch failed: {e}")
             st.stop()
 
         # Flatten to a single list for one batched LLM call
+        # (skip placeholder error entries from per-category failures)
         all_articles = []
         for articles in raw_results.values():
-            all_articles.extend(articles)
+            for a in articles:
+                if "_error" not in a:
+                    all_articles.append(a)
 
         if all_articles:
             try:
                 enrich_articles(all_articles)
             except RuntimeError as e:
-                st.warning(f"AI summaries unavailable: {e}. Showing articles without summaries.")
+                st.warning(
+                    f"AI summaries unavailable: {e}. "
+                    "Showing articles without summaries."
+                )
 
         # Rebuild results dict with enriched articles (already mutated in-place)
         st.session_state["results"] = raw_results
@@ -256,6 +270,12 @@ else:
 
         if not articles:
             st.markdown('<div class="no-articles">No recent articles found in the last 24 hours.</div>', unsafe_allow_html=True)
+        elif len(articles) == 1 and "_error" in articles[0]:
+            err_lower = articles[0]["_error"].lower()
+            if "quota exhausted" in err_lower or "429" in err_lower or "426" in err_lower or "ratelimited" in err_lower:
+                st.markdown('<div class="no-articles">⚠️ API quota exhausted for this category. Try again later.</div>', unsafe_allow_html=True)
+            else:
+                st.markdown(f'<div class="no-articles">⚠️ Could not fetch articles: {articles[0]["_error"]}</div>', unsafe_allow_html=True)
         else:
             for article in articles:
                 _render_article_card(article)

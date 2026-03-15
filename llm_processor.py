@@ -1,4 +1,5 @@
 import json
+import re
 import anthropic
 
 from config import ANTHROPIC_API_KEY, LLM_MODEL
@@ -40,7 +41,7 @@ def enrich_articles(all_articles: list[dict]) -> list[dict]:
 
     # Fill any missing enrichments with safe defaults
     for article in all_articles:
-        article.setdefault("summary", "")
+        article.setdefault("summary", "Summary unavailable.")
         article.setdefault("sentiment", "Neutral")
 
     return all_articles
@@ -69,7 +70,11 @@ def _call_llm(payload: list[dict]) -> str:
 def _parse_response(response_text: str, expected_count: int) -> list[dict]:
     """
     Parse the JSON array from the LLM response.
-    Falls back to empty list on parse failure to avoid crashing the app.
+    Handles three common failure modes:
+      1. Markdown code fences (```json ... ```)
+      2. Preamble text before the JSON array
+      3. Truncated/malformed JSON — falls back to empty list so the app degrades
+         gracefully (articles shown without summary/sentiment) rather than crashing.
     """
     text = response_text.strip()
 
@@ -81,6 +86,7 @@ def _parse_response(response_text: str, expected_count: int) -> list[dict]:
             if not line.strip().startswith("```")
         ).strip()
 
+    # Attempt direct parse first
     try:
         result = json.loads(text)
         if isinstance(result, list):
@@ -88,4 +94,15 @@ def _parse_response(response_text: str, expected_count: int) -> list[dict]:
     except json.JSONDecodeError:
         pass
 
+    # Fallback: extract the first [...] block in case of preamble text
+    match = re.search(r"\[.*\]", text, re.DOTALL)
+    if match:
+        try:
+            result = json.loads(match.group())
+            if isinstance(result, list):
+                return result
+        except json.JSONDecodeError:
+            pass
+
+    # Complete parse failure — return empty so caller uses safe defaults
     return []
