@@ -44,8 +44,8 @@ def fetch_articles_for_category(category: str, window_start: datetime) -> list[d
     Returns a list of article dicts (max 2).
     """
     keywords = CATEGORIES[category]
-    # NewsAPI expects UTC in Z-suffix format, not +00:00
-    from_param = window_start.strftime("%Y-%m-%dT%H:%M:%SZ")
+    # NewsAPI expects YYYY-MM-DDTHH:MM:SS with no timezone suffix
+    from_param = window_start.strftime("%Y-%m-%dT%H:%M:%S")
     found = []
 
     for keyword in keywords:
