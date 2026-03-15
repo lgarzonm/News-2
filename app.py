@@ -3,7 +3,7 @@ import pandas as pd
 import streamlit as st
 
 from config import CATEGORIES
-from news_fetcher import fetch_all_categories
+from news_fetcher import fetch_all_categories, is_off_hours
 from llm_processor import enrich_articles
 
 # ---------------------------------------------------------------------------
@@ -217,7 +217,7 @@ st.markdown(f"""
 if st.button("🔄 Refresh News"):
     with st.spinner("Fetching latest articles and generating summaries…"):
         try:
-            raw_results = fetch_all_categories()
+            raw_results, window_hours = fetch_all_categories()
         except RuntimeError as e:
             err_msg = str(e).lower()
             if "quota exhausted" in err_msg or "429" in err_msg or "426" in err_msg or "ratelimited" in err_msg:
@@ -248,7 +248,8 @@ if st.button("🔄 Refresh News"):
                 )
 
         # Rebuild results dict with enriched articles (already mutated in-place)
-        st.session_state["results"] = raw_results
+        st.session_state["results"]      = raw_results
+        st.session_state["window_hours"] = window_hours
         st.session_state["last_updated"] = (
             datetime.now(timezone.utc).strftime("%B %d, %Y · %H:%M UTC")
         )
@@ -262,6 +263,12 @@ results: dict = st.session_state.get("results", {})
 if not results:
     st.info("Click **Refresh News** to load the latest articles.")
 else:
+    window_hours = st.session_state.get("window_hours", 24)
+    if window_hours > 24:
+        st.info(
+            f"🌙 Weekend / off-hours mode · Showing analysis, previews & forecasts "
+            f"· Last {window_hours} hours"
+        )
     # Render each category
     for category in CATEGORIES:
         articles = results.get(category, [])
@@ -269,7 +276,8 @@ else:
         st.markdown(f'<div class="category-badge">{category}</div>', unsafe_allow_html=True)
 
         if not articles:
-            st.markdown('<div class="no-articles">No recent articles found in the last 24 hours.</div>', unsafe_allow_html=True)
+            wh = st.session_state.get("window_hours", 24)
+            st.markdown(f'<div class="no-articles">No recent articles found in the last {wh} hours.</div>', unsafe_allow_html=True)
         elif len(articles) == 1 and "_error" in articles[0]:
             err_lower = articles[0]["_error"].lower()
             if "quota exhausted" in err_lower or "429" in err_lower or "426" in err_lower or "ratelimited" in err_lower:
