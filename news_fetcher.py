@@ -43,7 +43,7 @@ def is_off_hours() -> bool:
 
 def _get_window_hours() -> int:
     """24 h on weekdays, 72 h on weekends/off-hours to catch Friday + weekend content."""
-    return 72 if is_off_hours() else 24
+    return 48 if is_off_hours() else 24
 
 
 # ---------------------------------------------------------------------------
