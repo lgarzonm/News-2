@@ -237,6 +237,79 @@ TRUSTED_SOURCES = [
 ]
 
 # ---------------------------------------------------------------------------
+# Blocked domains — sources known to return off-topic or low-quality results.
+# Articles from these domains are discarded regardless of keyword match.
+# ---------------------------------------------------------------------------
+BLOCKED_DOMAINS = [
+    "barchart.com",     # commodity charts — keeps matching FX keywords with cocoa/grain stories
+    "triblive.com",     # local Pittsburgh news — zero relevance to finance
+    "msn.com",          # aggregator with poor relevance on free-tier keyword queries
+    "patch.com",        # hyper-local US community news
+    "legacy.com",       # obituaries
+]
+
+# ---------------------------------------------------------------------------
+# Title relevance terms — post-fetch gate.
+# After NewsAPI/GNews return results, we check that the article TITLE contains
+# at least one term from this list.  This stops body-matched irrelevant results
+# (e.g. a school renovation article that mentions "bond rate" in paragraph 8).
+# Terms are matched case-insensitively as substrings of the title.
+# ---------------------------------------------------------------------------
+TITLE_REQUIRED_TERMS = {
+    "📈 Stocks": [
+        "stock", "share", "equity", "equities", "market", "earnings",
+        "ipo", "dividend", "wall street", "nasdaq", "s&p", "dow",
+        "rally", "selloff", "sell-off", "profit", "revenue", "buyback",
+    ],
+    "💵 Currencies (Fiat / FX)": [
+        "dollar", "euro", "yen", "pound", "sterling", "franc", "currency", "currencies",
+        "forex", " fx ", "eur/", "usd/", "gbp/", "jpy/", "aud/", "sgd/", "myr/",
+        "idr/", "thb/", "ringgit", "rupiah", "baht", "peso", "won", "ruble",
+        "exchange rate", "dxy", "greenback", "rate hike", "rate cut",
+        "devaluation", "appreciation", "depreciation", "central bank",
+    ],
+    "📊 Indexes": [
+        "s&p 500", "nasdaq", "dow", "nikkei", "hang seng", "msci", "index",
+        "indices", "futures", "etf", "market rally", "market selloff",
+        "stock market", "equity market",
+    ],
+    "🌏 Regional (APAC / ASEAN)": [
+        "asia", "asean", "apac", "singapore", "indonesia", "malaysia",
+        "thailand", "vietnam", "philippines", "china", "japan", "korea",
+        "emerging market", "southeast asia",
+    ],
+    "🏦 Country Credit": [
+        "bond", "yield", "debt", "sovereign", "credit rating", "moody",
+        "fitch", "s&p rating", "default", "fiscal", "deficit", "treasury",
+        "government bond", "rating",
+    ],
+    "💳 Alternative Lending": [
+        "lending", "loan", "credit", "financi", "private debt", "private credit",
+        "sme", "non-bank", "asset-backed", "structured finance",
+    ],
+    "💻 Fintech": [
+        "fintech", "bank", "payment", "crypto", "blockchain", "digital",
+        "wallet", "bnpl", "neobank", "defi", "financial technology",
+    ],
+    "🚀 Start-ups": [
+        "startup", "start-up", "funding", "venture", "series a", "series b",
+        "seed", "unicorn", "founder", "vc ", "valuation", "raise",
+    ],
+    "🌱 Sustainable Finance": [
+        "esg", "green bond", "sustainable", "climate", "carbon", "net zero",
+        "renewable", "energy transition", "impact invest", "clean energy",
+    ],
+    "📣 Marketing": [
+        "marketing", "advertising", "brand", "campaign", "consumer",
+        "ad spend", "social media", "digital marketing", "market share",
+    ],
+    "🎭 Entertainment (Singapore)": [
+        "singapore", "sentosa", "marina bay", "concert", "festival",
+        "theatre", "theater", "exhibition", "restaurant", "event",
+    ],
+}
+
+# ---------------------------------------------------------------------------
 # Guardian API  — section IDs per category for tighter relevance
 # https://open-platform.theguardian.com/  (free, 500 req/day)
 # ---------------------------------------------------------------------------
