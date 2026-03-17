@@ -6,7 +6,7 @@ import streamlit as st
 SGT = timezone(timedelta(hours=8))
 
 from config import CATEGORIES
-from news_fetcher import fetch_all_categories, fetch_articles_for_category, _get_window_hours, is_off_hours
+from news_fetcher import fetch_all_categories, fetch_articles_for_category, _get_window_hours
 from llm_processor import enrich_articles
 
 # ---------------------------------------------------------------------------
@@ -31,13 +31,13 @@ html, body, [class*="css"] {
     color: #111827;
 }
 
-/* Header */
+/* ── Header ─────────────────────────────────────────────────────────────── */
 .helicap-header {
     background-color: #0D1F3C;
     padding: 1.2rem 2rem;
     border-radius: 8px;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: space-between;
     margin-bottom: 1.5rem;
 }
@@ -46,15 +46,48 @@ html, body, [class*="css"] {
     color: #FFFFFF;
     font-size: 1.8rem;
     font-weight: 700;
-    margin: 0;
+    margin: 0 0 0.15rem 0;
 }
-.helicap-header .timestamp {
-    color: #A0AEC0;
-    font-size: 0.85rem;
-    margin-top: 0.2rem;
+.header-tagline {
+    color: #7B93B8;
+    font-size: 0.95rem;
+    font-style: italic;
+    font-family: 'Inter', sans-serif;
 }
 
-/* Category badge */
+/* ── Sidebar credit block ────────────────────────────────────────────────── */
+.sidebar-credit {
+    background-color: #0D1F3C;
+    border-radius: 8px;
+    padding: 1.2rem 1rem 1rem;
+    margin-bottom: 0.6rem;
+    text-align: center;
+}
+.sidebar-credit .credit-label {
+    color: #7B93B8;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    margin-bottom: 0.35rem;
+}
+.sidebar-credit .credit-name {
+    color: #FFFFFF;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1.25rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+/* ── Sidebar last-updated ────────────────────────────────────────────────── */
+.sidebar-updated {
+    color: #6B7280;
+    font-size: 0.78rem;
+    text-align: center;
+    line-height: 1.6;
+    margin-bottom: 0.25rem;
+}
+
+/* ── Category badge ──────────────────────────────────────────────────────── */
 .category-badge {
     display: inline-block;
     background-color: #0D1F3C;
@@ -67,7 +100,7 @@ html, body, [class*="css"] {
     margin-bottom: 0.75rem;
 }
 
-/* Article card */
+/* ── Article card ────────────────────────────────────────────────────────── */
 .article-card {
     background-color: #EBF2FF;
     border-radius: 8px;
@@ -104,7 +137,7 @@ html, body, [class*="css"] {
     padding: 0.5rem 0;
 }
 
-/* Read link */
+/* ── Read link ───────────────────────────────────────────────────────────── */
 .read-link a {
     color: #1A56DB;
     font-size: 0.85rem;
@@ -113,7 +146,7 @@ html, body, [class*="css"] {
 }
 .read-link a:hover { text-decoration: underline; }
 
-/* Refresh button override */
+/* ── Buttons ─────────────────────────────────────────────────────────────── */
 div[data-testid="stButton"] > button {
     background-color: #1A56DB;
     color: #FFFFFF;
@@ -128,7 +161,7 @@ div[data-testid="stButton"] > button:hover {
     background-color: #1446B8;
 }
 
-/* Footer */
+/* ── Footer ──────────────────────────────────────────────────────────────── */
 .helicap-footer {
     text-align: center;
     color: #6B7280;
@@ -165,13 +198,12 @@ def _sentiment_html(sentiment: str) -> str:
 
 
 def _render_article_card(article: dict) -> None:
-    title    = article.get("title", "")
-    source   = article.get("source", "")
-    pub      = _format_timestamp(article.get("published_at", ""))
-    summary  = article.get("summary", "") or "Summary unavailable."
+    title     = article.get("title", "")
+    source    = article.get("source", "")
+    pub       = _format_timestamp(article.get("published_at", ""))
+    summary   = article.get("summary", "") or "Summary unavailable."
     sentiment = article.get("sentiment", "Neutral")
-    url      = article.get("url", "#")
-
+    url       = article.get("url", "#")
     trusted_badge = " ✓" if article.get("trusted") else ""
 
     st.markdown(f"""
@@ -204,43 +236,100 @@ def _build_dataframe(results: dict) -> pd.DataFrame:
 
 
 # ---------------------------------------------------------------------------
+# Sidebar
+# ---------------------------------------------------------------------------
+all_category_keys = list(CATEGORIES.keys())
+
+with st.sidebar:
+    # Credit block — prominent, navy-styled
+    st.markdown("""
+    <div class="sidebar-credit">
+        <div class="credit-label">Created and Designed by</div>
+        <div class="credit-name">Laura Garzon</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Last updated timestamp
+    last_updated = st.session_state.get("last_updated", "—")
+    st.markdown(
+        f'<div class="sidebar-updated">Last updated<br><strong>{last_updated}</strong></div>',
+        unsafe_allow_html=True,
+    )
+
+    st.divider()
+
+    # Category filter — resets to all on fresh page load
+    selected_categories = st.multiselect(
+        "Categories",
+        options=all_category_keys,
+        default=all_category_keys,
+        help="Deselect categories you don't need — saves API quota.",
+    )
+
+    # Articles per category
+    max_articles = st.slider(
+        "Articles per category",
+        min_value=1,
+        max_value=5,
+        value=2,
+        help="Niche categories may have fewer articles available in the last 24 h.",
+    )
+
+    st.divider()
+
+    refresh_clicked = st.button("🔄 Refresh News")
+
+    # Debug mode — collapsed by default
+    st.divider()
+    with st.expander("🛠 Debug Mode"):
+        st.caption("Test a single category without a full refresh or AI call.")
+        debug_category = st.selectbox(
+            "Category to test",
+            options=all_category_keys,
+            key="debug_category_select",
+        )
+        if st.button("🔍 Test this category", key="debug_fetch_btn"):
+            window_hours = _get_window_hours()
+            window_start = datetime.now(timezone.utc) - timedelta(hours=window_hours)
+            with st.spinner(f"Fetching '{debug_category}'…"):
+                try:
+                    debug_articles = fetch_articles_for_category(
+                        debug_category, window_start, max_articles
+                    )
+                except Exception as exc:
+                    st.error(f"Error: {exc}")
+                    debug_articles = []
+            if not debug_articles:
+                st.warning(f"No articles found in the last {window_hours} h.")
+            else:
+                st.success(f"{len(debug_articles)} article(s) — raw data, no AI summary.")
+                for a in debug_articles:
+                    trusted = "✓ trusted" if a.get("trusted") else "· unverified"
+                    pub = a.get("published_at", "")[:16].replace("T", " ")
+                    st.markdown(f"""
+**{a['title']}**
+`{a['source']}` {trusted} · `{pub}`
+{a.get('url', '')}
+---""")
+
+
+# ---------------------------------------------------------------------------
 # Header
 # ---------------------------------------------------------------------------
-last_updated = st.session_state.get("last_updated", "—")
-st.markdown(f"""
+st.markdown("""
 <div class="helicap-header">
     <div>
         <h1>🔵 Helicap News</h1>
-        <div class="timestamp" style="color:#7B93B8; font-size:0.75rem; margin-top:0.1rem;">
-            Curated by AI · Designed by Laura Garzon
-        </div>
-        <div class="timestamp">Last updated: {last_updated}</div>
+        <div class="header-tagline">Stay informed. Stay ahead.</div>
     </div>
 </div>
 """, unsafe_allow_html=True)
 
+
 # ---------------------------------------------------------------------------
-# Controls — category filter + article count slider
+# Refresh logic
 # ---------------------------------------------------------------------------
-all_category_keys = list(CATEGORIES.keys())
-
-selected_categories = st.multiselect(
-    "Categories to fetch",
-    options=all_category_keys,
-    default=all_category_keys,
-    help="Deselect categories you don't need — saves API quota.",
-)
-
-max_articles = st.slider(
-    "Articles per category",
-    min_value=1,
-    max_value=5,
-    value=2,
-    help="Note: niche categories (e.g. Alternative Lending) may have fewer articles available in the last 24 h.",
-)
-
-# Refresh button — sits below controls, full width via CSS
-if st.button("🔄 Refresh News"):
+if refresh_clicked:
     if not selected_categories:
         st.warning("Please select at least one category.")
         st.stop()
@@ -249,7 +338,7 @@ if st.button("🔄 Refresh News"):
             raw_results, window_hours = fetch_all_categories(selected_categories, max_articles)
         except RuntimeError as e:
             err_msg = str(e).lower()
-            if "quota exhausted" in err_msg or "429" in err_msg or "426" in err_msg or "ratelimited" in err_msg:
+            if any(k in err_msg for k in ("quota exhausted", "429", "426", "ratelimited")):
                 st.error(
                     "⚠️ NewsAPI daily quota exhausted (100 req/day on free tier). "
                     "GNews fallback also unavailable. Please try again tomorrow or "
@@ -259,30 +348,24 @@ if st.button("🔄 Refresh News"):
                 st.error(f"News fetch failed: {e}")
             st.stop()
 
-        # Flatten to a single list for one batched LLM call
-        # (skip placeholder error entries from per-category failures)
-        all_articles = []
-        for articles in raw_results.values():
-            for a in articles:
-                if "_error" not in a:
-                    all_articles.append(a)
+        all_articles = [
+            a
+            for articles in raw_results.values()
+            for a in articles
+            if "_error" not in a
+        ]
 
         if all_articles:
             try:
                 enrich_articles(all_articles)
             except RuntimeError as e:
-                st.warning(
-                    f"AI summaries unavailable: {e}. "
-                    "Showing articles without summaries."
-                )
+                st.warning(f"AI summaries unavailable: {e}. Showing articles without summaries.")
 
-        # Rebuild results dict with enriched articles (already mutated in-place)
         st.session_state["results"]      = raw_results
         st.session_state["window_hours"] = window_hours
-        st.session_state["last_updated"] = (
-            datetime.now(SGT).strftime("%B %d, %Y · %H:%M SGT")
-        )
+        st.session_state["last_updated"] = datetime.now(SGT).strftime("%B %d, %Y · %H:%M SGT")
         st.rerun()
+
 
 # ---------------------------------------------------------------------------
 # Results
@@ -290,7 +373,7 @@ if st.button("🔄 Refresh News"):
 results: dict = st.session_state.get("results", {})
 
 if not results:
-    st.info("Click **Refresh News** to load the latest articles.")
+    st.info("Click **Refresh News** in the sidebar to load the latest articles.")
 else:
     window_hours = st.session_state.get("window_hours", 24)
     if window_hours > 24:
@@ -298,23 +381,32 @@ else:
             f"🌙 Weekend / off-hours mode · Showing analysis, previews & forecasts "
             f"· Last {window_hours} hours"
         )
-    # Render each category (only the ones that were fetched)
+
     for category in all_category_keys:
         if category not in results:
             continue
-        articles = results.get(category, [])
+        articles = results[category]
 
         st.markdown(f'<div class="category-badge">{category}</div>', unsafe_allow_html=True)
 
         if not articles:
             wh = st.session_state.get("window_hours", 24)
-            st.markdown(f'<div class="no-articles">No recent articles found in the last {wh} hours.</div>', unsafe_allow_html=True)
+            st.markdown(
+                f'<div class="no-articles">No recent articles found in the last {wh} hours.</div>',
+                unsafe_allow_html=True,
+            )
         elif len(articles) == 1 and "_error" in articles[0]:
             err_lower = articles[0]["_error"].lower()
-            if "quota exhausted" in err_lower or "429" in err_lower or "426" in err_lower or "ratelimited" in err_lower:
-                st.markdown('<div class="no-articles">⚠️ API quota exhausted for this category. Try again later.</div>', unsafe_allow_html=True)
+            if any(k in err_lower for k in ("quota exhausted", "429", "426", "ratelimited")):
+                st.markdown(
+                    '<div class="no-articles">⚠️ API quota exhausted for this category. Try again later.</div>',
+                    unsafe_allow_html=True,
+                )
             else:
-                st.markdown(f'<div class="no-articles">⚠️ Could not fetch articles: {articles[0]["_error"]}</div>', unsafe_allow_html=True)
+                st.markdown(
+                    f'<div class="no-articles">⚠️ Could not fetch: {articles[0]["_error"]}</div>',
+                    unsafe_allow_html=True,
+                )
         else:
             for article in articles:
                 _render_article_card(article)
@@ -330,41 +422,6 @@ else:
         file_name=f"helicap_news_{run_date}.csv",
         mime="text/csv",
     )
-
-# ---------------------------------------------------------------------------
-# Debug Mode
-# ---------------------------------------------------------------------------
-with st.expander("🛠 Debug Mode — Test a single category"):
-    st.caption("Fetch raw articles for one category without running the full refresh or calling the AI. Useful for checking which categories have results.")
-
-    debug_category = st.selectbox(
-        "Category to test",
-        options=list(CATEGORIES.keys()),
-        key="debug_category_select",
-    )
-
-    if st.button("🔍 Test this category", key="debug_fetch_btn"):
-        window_hours = _get_window_hours()
-        window_start = datetime.now(timezone.utc) - timedelta(hours=window_hours)
-        with st.spinner(f"Fetching '{debug_category}'…"):
-            try:
-                articles = fetch_articles_for_category(debug_category, window_start, max_articles)
-            except Exception as e:
-                st.error(f"Error: {e}")
-                articles = []
-
-        if not articles:
-            st.warning(f"No articles found in the last {window_hours}h for this category.")
-        else:
-            st.success(f"{len(articles)} article(s) found — no AI summary, raw data only.")
-            for a in articles:
-                trusted = "✓ trusted" if a.get("trusted") else "· unverified"
-                pub = a.get("published_at", "")[:16].replace("T", " ")
-                st.markdown(f"""
-**{a['title']}**
-`{a['source']}` {trusted} · `{pub}`
-{a.get('url', '')}
----""")
 
 
 # ---------------------------------------------------------------------------
