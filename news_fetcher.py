@@ -13,6 +13,8 @@ from config import (
     GEO_PREFIX,
     ENTERTAINMENT_SOURCES,
     TRUSTED_SOURCES,
+    BLOCKED_DOMAINS,
+    TITLE_REQUIRED_TERMS,
     GUARDIAN_SECTIONS,
     RSS_FEEDS,
 )
@@ -63,6 +65,28 @@ def _is_trusted(text: str) -> bool:
         return False
     t = text.lower()
     return any(domain in t for domain in TRUSTED_SOURCES)
+
+
+def _is_blocked(url: str) -> bool:
+    """Return True if the article URL belongs to a blocked domain."""
+    if not url:
+        return False
+    u = url.lower()
+    return any(domain in u for domain in BLOCKED_DOMAINS)
+
+
+def _is_title_relevant(title: str, category: str) -> bool:
+    """
+    Return True only if the article title contains at least one term
+    from the category's required-term list.  This prevents NewsAPI
+    body-matched noise (e.g. a school renovation article that mentions
+    'bond rate' deep in the text) from appearing in unrelated categories.
+    """
+    required = TITLE_REQUIRED_TERMS.get(category)
+    if not required:
+        return True   # no filter defined for this category — allow all
+    t = title.lower()
+    return any(term in t for term in required)
 
 
 def _get_keywords(category: str) -> list[str]:
@@ -155,7 +179,11 @@ def _fetch_via_newsapi(category: str, window_start: datetime) -> list[dict]:
             continue
         if url in seen_urls:
             continue
+        if _is_blocked(url):
+            continue
         if not _is_within_window(raw.get("publishedAt", ""), window_start):
+            continue
+        if not _is_title_relevant(title, category):
             continue
         seen_urls.add(url)
         found.append(_normalise_article(raw, category))
@@ -212,7 +240,11 @@ def _fetch_via_gnews(category: str, window_start: datetime) -> list[dict]:
                 continue
             if url in seen_urls:
                 continue
+            if _is_blocked(url):
+                continue
             if not _is_within_window(raw.get("publishedAt", ""), window_start):
+                continue
+            if not _is_title_relevant(title, category):
                 continue
             seen_urls.add(url)
             found.append(_normalise_article(raw, category))
@@ -269,6 +301,8 @@ def _fetch_via_guardian(category: str, window_start: datetime) -> list[dict]:
             "source":      {"name": "The Guardian", "url": "theguardian.com"},
         }
         if not raw["title"] or not raw["url"]:
+            continue
+        if not _is_title_relevant(raw["title"], category):
             continue
         found.append(_normalise_article(raw, category))
 
@@ -334,6 +368,10 @@ def _fetch_via_rss(category: str, window_start: datetime) -> list[dict]:
             # Derive source name from feed URL
             source_name = feed.feed.get("title", feed_url.split("/")[2])
 
+            if _is_blocked(url):
+                continue
+            if not _is_title_relevant(title, category):
+                continue
             raw = {
                 "title":       title,
                 "description": description,
