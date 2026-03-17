@@ -12,7 +12,6 @@ from config import (
     CATEGORIES,
     WEEKEND_KEYWORDS,
     GEO_PREFIX,
-    ENTERTAINMENT_SOURCES,
     TRUSTED_SOURCES,
     BLOCKED_DOMAINS,
     TITLE_REQUIRED_TERMS,
@@ -153,9 +152,22 @@ def _get_keywords(category: str) -> list[str]:
 
 
 def _build_keyword_query(category: str) -> str:
-    """OR-batch all keywords for a category into one query string."""
+    """OR-batch all keywords for a category into one query string.
+
+    Keywords are quoted if they:
+    - contain a space (multi-word phrase), OR
+    - contain special chars that NewsAPI's boolean parser interprets as
+      operators: & (AND operator), ' (tokenisation break), : / ( )
+    Example: S&P → "S&P", Moody's → "Moody's" — without quotes, & and '
+    can silently corrupt the boolean chain from that position onward.
+    """
+    _SPECIAL = frozenset("&':/() ")
+
+    def _quote(kw: str) -> str:
+        return f'"{kw}"' if any(c in kw for c in _SPECIAL) else kw
+
     keywords = _get_keywords(category)
-    keyword_part = " OR ".join(f'"{kw}"' if " " in kw else kw for kw in keywords)
+    keyword_part = " OR ".join(_quote(kw) for kw in keywords)
     geo = GEO_PREFIX.get(category)
     if geo:
         return f"({keyword_part}) AND ({geo})"
@@ -215,8 +227,9 @@ def _fetch_via_newsapi(category: str, window_start: datetime) -> list[dict]:
         "page_size":  10,
         "language":   "en",
     }
-    if category == ENTERTAINMENT_CATEGORY:
-        kwargs["sources"] = ENTERTAINMENT_SOURCES
+    # NOTE: do NOT add sources= here — NewsAPI source IDs are unreliable on
+    # the free tier. Entertainment quality is controlled by GEO_PREFIX
+    # ("Singapore") in the query and by the Time Out Singapore RSS feed.
 
     try:
         response = _newsapi_client.get_everything(**kwargs)
