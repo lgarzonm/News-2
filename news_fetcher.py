@@ -1,3 +1,4 @@
+import re
 from datetime import datetime, timedelta, timezone
 
 import feedparser
@@ -67,6 +68,40 @@ def _is_trusted(text: str) -> bool:
         return False
     t = text.lower()
     return any(domain in t for domain in TRUSTED_SOURCES)
+
+
+_STOPWORDS = frozenset({
+    "the", "and", "for", "from", "with", "that", "this", "have", "will",
+    "been", "are", "was", "were", "its", "into", "about", "over", "says",
+    "said", "also", "than", "more", "after", "they", "their", "amid",
+    "would", "could", "new", "top", "how", "why", "amid", "has", "its",
+})
+
+
+def _sig_words(title: str) -> frozenset:
+    """Extract significant tokens from a title for same-story detection.
+    Keeps words ≥3 chars OR pure numeric tokens ≥2 chars (funding amounts
+    like '36', '500' are strong story identifiers), then removes stopwords."""
+    tokens = re.findall(r"[a-z0-9]+", title.lower())
+    return frozenset(
+        t for t in tokens
+        if t not in _STOPWORDS and (len(t) >= 3 or (t.isdigit() and len(t) >= 2))
+    )
+
+
+def _is_same_story(title_a: str, title_b: str, threshold: float = 0.6) -> bool:
+    """Return True if two titles cover the same news event.
+
+    Uses word-overlap ratio: shared significant words / min(words in either title).
+    A threshold of 0.6 means 60% of the shorter title's key words appear in
+    the other — enough to catch rephrased syndicated articles while avoiding
+    false positives between genuinely different stories in the same sector.
+    """
+    a = _sig_words(title_a)
+    b = _sig_words(title_b)
+    if not a or not b:
+        return False
+    return len(a & b) / min(len(a), len(b)) >= threshold
 
 
 def _is_blocked(url: str) -> bool:
@@ -147,15 +182,21 @@ def _normalise_article(raw: dict, category: str) -> dict:
 
 
 def _merge_unique(base: list[dict], new_articles: list[dict], limit: int = 2) -> list[dict]:
-    """Append articles from new_articles that aren't already in base, up to limit total."""
-    seen = {a["url"] for a in base}
+    """Append articles from new_articles that aren't already in base, up to limit total.
+    Deduplicates by both URL (exact) and title similarity (same-story detection)."""
+    seen_urls   = {a["url"] for a in base}
+    seen_titles = [a["title"] for a in base]
     result = list(base)
     for a in new_articles:
         if len(result) >= limit:
             break
-        if a["url"] and a["url"] not in seen:
-            result.append(a)
-            seen.add(a["url"])
+        if not a["url"] or a["url"] in seen_urls:
+            continue
+        if any(_is_same_story(a["title"], t) for t in seen_titles):
+            continue
+        result.append(a)
+        seen_urls.add(a["url"])
+        seen_titles.append(a["title"])
     return result
 
 
@@ -187,8 +228,9 @@ def _fetch_via_newsapi(category: str, window_start: datetime) -> list[dict]:
         msg  = response.get("message", "no message")
         raise RuntimeError(f"{code}: {msg}")
 
-    found = []
-    seen_urls: set[str] = set()
+    found: list[dict] = []
+    seen_urls:   set[str]  = set()
+    seen_titles: list[str] = []
     for raw in response.get("articles", []):
         if len(found) >= 2:
             break
@@ -206,7 +248,10 @@ def _fetch_via_newsapi(category: str, window_start: datetime) -> list[dict]:
             continue
         if not _is_title_relevant(title, category):
             continue
+        if any(_is_same_story(title, t) for t in seen_titles):
+            continue
         seen_urls.add(url)
+        seen_titles.append(title)
         found.append(_normalise_article(raw, category))
 
     return found
@@ -240,9 +285,10 @@ def _fetch_via_gnews(category: str, window_start: datetime) -> list[dict]:
         return []
 
     from_param = window_start.strftime("%Y-%m-%dT%H:%M:%SZ")
-    geo        = GEO_PREFIX.get(category)
-    found      = []
-    seen_urls: set[str] = set()
+    geo          = GEO_PREFIX.get(category)
+    found:       list[dict] = []
+    seen_urls:   set[str]   = set()
+    seen_titles: list[str]  = []
 
     for keyword in _get_keywords(category):
         if len(found) >= 2:
@@ -267,7 +313,10 @@ def _fetch_via_gnews(category: str, window_start: datetime) -> list[dict]:
                 continue
             if not _is_title_relevant(title, category):
                 continue
+            if any(_is_same_story(title, t) for t in seen_titles):
+                continue
             seen_urls.add(url)
+            seen_titles.append(title)
             found.append(_normalise_article(raw, category))
 
     return found
@@ -340,8 +389,9 @@ def _fetch_via_rss(category: str, window_start: datetime) -> list[dict]:
     if not feed_urls:
         return []
 
-    found: list[dict] = []
-    seen_urls: set[str] = set()
+    found:       list[dict] = []
+    seen_urls:   set[str]   = set()
+    seen_titles: list[str]  = []
 
     for feed_url in feed_urls:
         if len(found) >= 2:
@@ -357,6 +407,8 @@ def _fetch_via_rss(category: str, window_start: datetime) -> list[dict]:
             url   = entry.get("link", "")
             title = entry.get("title", "")
             if not url or not title or url in seen_urls:
+                continue
+            if any(_is_same_story(title, t) for t in seen_titles):
                 continue
 
             # Parse publication date from RSS entry
@@ -401,6 +453,7 @@ def _fetch_via_rss(category: str, window_start: datetime) -> list[dict]:
                 "source":      {"name": source_name, "url": feed_url.split("/")[2]},
             }
             seen_urls.add(url)
+            seen_titles.append(title)
             found.append(_normalise_article(raw, category))
 
     return found
