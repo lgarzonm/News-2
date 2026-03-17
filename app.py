@@ -2,6 +2,9 @@ from datetime import datetime, timedelta, timezone
 import pandas as pd
 import streamlit as st
 
+# Singapore Standard Time (UTC+8) — used for all display timestamps
+SGT = timezone(timedelta(hours=8))
+
 from config import CATEGORIES
 from news_fetcher import fetch_all_categories, fetch_articles_for_category, _get_window_hours, is_off_hours
 from llm_processor import enrich_articles
@@ -145,7 +148,7 @@ div[data-testid="stButton"] > button:hover {
 def _format_timestamp(iso_str: str) -> str:
     try:
         dt = datetime.fromisoformat(iso_str.replace("Z", "+00:00"))
-        return dt.strftime("%b %d, %Y · %I:%M %p UTC")
+        return dt.astimezone(SGT).strftime("%b %d, %Y · %I:%M %p SGT")
     except Exception:
         return iso_str
 
@@ -251,7 +254,7 @@ if st.button("🔄 Refresh News"):
         st.session_state["results"]      = raw_results
         st.session_state["window_hours"] = window_hours
         st.session_state["last_updated"] = (
-            datetime.now(timezone.utc).strftime("%B %d, %Y · %H:%M UTC")
+            datetime.now(SGT).strftime("%B %d, %Y · %H:%M SGT")
         )
         st.rerun()
 
@@ -292,7 +295,7 @@ else:
 
     # CSV download
     df = _build_dataframe(results)
-    run_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    run_date = datetime.now(SGT).strftime("%Y-%m-%d")
     st.download_button(
         label="⬇ Download CSV",
         data=df.to_csv(index=False).encode("utf-8"),
