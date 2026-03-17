@@ -251,6 +251,7 @@ BLOCKED_DOMAINS = [
     "patch.com",            # hyper-local US community news
     "legacy.com",           # obituaries
     "cryptobreaking.com",   # crypto press releases — matches "Nasdaq listing" SPAC deals
+    "marketscreener.com",   # corporate news aggregator — publishes deals/deployments not macro news
     "globenewswire.com",    # raw press releases — company announcements, not market news
     "prnewswire.com",       # same — press releases not editorial news
     "businesswire.com",     # same
@@ -318,6 +319,26 @@ TITLE_REQUIRED_TERMS = {
     "🎭 Entertainment (Singapore)": [
         "singapore", "sentosa", "marina bay", "concert", "festival",
         "theatre", "theater", "exhibition", "restaurant", "event",
+    ],
+}
+
+# ---------------------------------------------------------------------------
+# Compound title filter — for categories where a geographic OR topic term
+# alone is too broad, the title must ALSO contain at least one of these
+# economic/financial context terms.  Implemented as an AND over both lists:
+#   _title_matches = geo_term_present AND context_term_present
+# ---------------------------------------------------------------------------
+TITLE_CONTEXT_TERMS = {
+    # "Southeast Asia" / "Asia" appear in countless corporate press releases,
+    # tech deployment deals, and infrastructure announcements.  Require that
+    # the title also signals economic/financial relevance.
+    "🌏 Regional (APAC / ASEAN)": [
+        "economy", "economic", "gdp", "growth", "trade", "export", "import",
+        "market", "markets", "price", "prices", "inflation", "investment",
+        "policy", "rate", "rates", "fund", "finance", "financial",
+        "bank", "credit", "debt", "fiscal", "monetary", "forecast",
+        "outlook", "oil", "energy", "commodity", "currency", "spending",
+        "jobs", "employment", "recession", "stimulus", "budget", "reform",
     ],
 }
 

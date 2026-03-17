@@ -15,6 +15,7 @@ from config import (
     TRUSTED_SOURCES,
     BLOCKED_DOMAINS,
     TITLE_REQUIRED_TERMS,
+    TITLE_CONTEXT_TERMS,
     GUARDIAN_SECTIONS,
     RSS_FEEDS,
 )
@@ -77,16 +78,24 @@ def _is_blocked(url: str) -> bool:
 
 def _is_title_relevant(title: str, category: str) -> bool:
     """
-    Return True only if the article title contains at least one term
-    from the category's required-term list.  This prevents NewsAPI
-    body-matched noise (e.g. a school renovation article that mentions
-    'bond rate' deep in the text) from appearing in unrelated categories.
+    Return True only if the article title passes both gate checks:
+    1. Contains at least one term from TITLE_REQUIRED_TERMS (topic/geo gate)
+    2. If TITLE_CONTEXT_TERMS is defined for the category, also contains at
+       least one economic/financial context term (compound AND gate).
+
+    This prevents body-matched noise (e.g. "small modular reactor in Southeast
+    Asia" passing the Regional geo gate but failing the economics context gate).
     """
     required = TITLE_REQUIRED_TERMS.get(category)
     if not required:
         return True   # no filter defined for this category — allow all
     t = title.lower()
-    return any(term in t for term in required)
+    if not any(term in t for term in required):
+        return False
+    context = TITLE_CONTEXT_TERMS.get(category)
+    if context and not any(term in t for term in context):
+        return False
+    return True
 
 
 def _get_keywords(category: str) -> list[str]:
