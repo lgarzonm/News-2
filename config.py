@@ -46,10 +46,19 @@ CATEGORIES = {
         "emerging markets", "trade", "exports",
     ],
     "🏦 Country Credit": [
-        "sovereign debt", "government bonds", "bond yields",
-        "credit rating", "rating upgrade", "rating downgrade",
-        "Moody's", "Fitch", "S&P rating", "default risk",
-        "yield curve", "fiscal deficit", "debt crisis",
+        # Rating agencies — bare names catch any headline with Moody's/Fitch/S&P action
+        "Moody's", "Fitch", "S&P", "DBRS", "Scope Ratings",
+        # Sovereign / government debt
+        "sovereign debt", "sovereign rating", "sovereign credit",
+        "government bond", "government debt", "national debt",
+        "bond yield", "bond yields", "yield curve",
+        # Fiscal / credit events
+        "credit rating", "rating downgrade", "rating upgrade",
+        "rating cut", "outlook cut", "outlook stable", "outlook negative",
+        "fiscal deficit", "fiscal framework", "fiscal policy",
+        "debt crisis", "debt default", "default risk",
+        # Broader fiscal signals (catches "Thai fiscal framework", "budget review")
+        "fiscal", "government budget", "public debt",
     ],
     "💳 Alternative Lending": [
         "private credit", "private debt", "direct lending",
@@ -161,10 +170,10 @@ WEEKEND_KEYWORDS = {
 # ---------------------------------------------------------------------------
 GEO_PREFIX = {
     "🌏 Regional (APAC / ASEAN)": "Asia OR ASEAN OR Southeast Asia",
-    "🏦 Country Credit":          "Asia OR ASEAN OR Southeast Asia",
     "💻 Fintech":                 "Asia OR ASEAN OR Southeast Asia",
-    # Alternative Lending and Sustainable Finance are global markets —
-    # restricting to Asia misses major stories (Deutsche Bank, European green bonds, etc.)
+    # Country Credit, Alternative Lending, and Sustainable Finance are global —
+    # restricting to Asia misses S&P/Fitch/Moody's global actions, Middle East
+    # war credit risk, oil price fiscal stress, etc.
     "🚀 Start-ups":               "Asia OR ASEAN OR Southeast Asia",
     "🎭 Entertainment (Singapore)": "Singapore",
 }
@@ -292,9 +301,14 @@ TITLE_REQUIRED_TERMS = {
         "emerging market", "southeast asia",
     ],
     "🏦 Country Credit": [
-        "bond", "yield", "debt", "sovereign", "credit rating", "moody",
-        "fitch", "s&p rating", "default", "fiscal", "deficit", "treasury",
-        "government bond", "rating",
+        # Rating agency names — any form ("Fitch cuts", "S&P warns", "Moody's downgrades")
+        "moody", "fitch", "s&p", "dbrs",
+        # Sovereign / debt language
+        "bond", "yield", "debt", "sovereign", "default", "fiscal",
+        "deficit", "treasury", "government bond", "public debt",
+        # Rating action language
+        "rating", "downgrade", "upgrade", "credit outlook", "credit risk",
+        "credit stability", "credit quality",
     ],
     "💳 Alternative Lending": [
         "lending", "loan", "credit", "financi", "private debt", "private credit",
