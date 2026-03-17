@@ -153,9 +153,9 @@ GEO_PREFIX = {
     "🌏 Regional (APAC / ASEAN)": "Asia OR ASEAN OR Southeast Asia",
     "🏦 Country Credit":          "Asia OR ASEAN OR Southeast Asia",
     "💻 Fintech":                 "Asia OR ASEAN OR Southeast Asia",
-    "💳 Alternative Lending":     "Asia OR ASEAN OR Southeast Asia",
+    # Alternative Lending and Sustainable Finance are global markets —
+    # restricting to Asia misses major stories (Deutsche Bank, European green bonds, etc.)
     "🚀 Start-ups":               "Asia OR ASEAN OR Southeast Asia",
-    "🌱 Sustainable Finance":     "Asia OR ASEAN OR Southeast Asia",
     "🎭 Entertainment (Singapore)": "Singapore",
 }
 
@@ -177,8 +177,13 @@ TRUSTED_SOURCES = [
     "seekingalpha.com", "thestreet.com",
     # Asia / Singapore
     "straitstimes.com", "businesstimes.com.sg",
-    # Specialist
-    "fintech.global", "esgnews.com", "altfi.com",
+    "channelnewsasia.com", "thestar.com.my",
+    # Fintech & Start-ups
+    "fintechnews.sg", "fintech.global", "techinasia.com",
+    # Sustainable Finance
+    "renewablesnow.com", "esgnews.com",
+    # Alternative Lending
+    "altfi.com",
     # Singapore Entertainment
     "timeout.com",
 ]
@@ -213,6 +218,7 @@ RSS_FEEDS = {
     ],
     "💳 Alternative Lending": [
         "https://www.altfi.com/feed",
+        "https://feeds.reuters.com/reuters/businessNews",  # covers Deutsche Bank / private credit stories
     ],
     "🎭 Entertainment (Singapore)": [
         "https://www.straitstimes.com/news/life/rss.xml",
@@ -223,6 +229,27 @@ RSS_FEEDS = {
     ],
     "📊 Indexes": [
         "https://www.investing.com/rss/news_25.rss",
+    ],
+    # Regional & Country Credit: CNA covers ASEAN daily
+    "🌏 Regional (APAC / ASEAN)": [
+        "https://www.channelnewsasia.com/api/v1/rss-outbound-feed?_format=xml&category=6511",  # Asia
+    ],
+    "🏦 Country Credit": [
+        "https://www.channelnewsasia.com/api/v1/rss-outbound-feed?_format=xml&category=6511",
+        "https://feeds.reuters.com/reuters/businessNews",
+    ],
+    # Fintech: Fintech News Singapore
+    "💻 Fintech": [
+        "https://fintechnews.sg/feed/",
+    ],
+    # Start-ups: Tech in Asia
+    "🚀 Start-ups": [
+        "https://www.techinasia.com/feed",
+    ],
+    # Sustainable Finance: Renewables Now + Reuters environment
+    "🌱 Sustainable Finance": [
+        "https://renewablesnow.com/feed/",
+        "https://feeds.reuters.com/reuters/environment",
     ],
 }
 
