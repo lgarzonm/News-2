@@ -46,19 +46,14 @@ CATEGORIES = {
         "emerging markets", "trade", "exports",
     ],
     "🏦 Country Credit": [
-        # Rating agencies — bare names catch any headline with Moody's/Fitch/S&P action
-        "Moody's", "Fitch", "S&P", "DBRS", "Scope Ratings",
+        # Rating agencies (bare names catch any headline form)
+        "Moody's", "Fitch", "S&P",
         # Sovereign / government debt
-        "sovereign debt", "sovereign rating", "sovereign credit",
-        "government bond", "government debt", "national debt",
-        "bond yield", "bond yields", "yield curve",
-        # Fiscal / credit events
-        "credit rating", "rating downgrade", "rating upgrade",
-        "rating cut", "outlook cut", "outlook stable", "outlook negative",
-        "fiscal deficit", "fiscal framework", "fiscal policy",
-        "debt crisis", "debt default", "default risk",
-        # Broader fiscal signals (catches "Thai fiscal framework", "budget review")
-        "fiscal", "government budget", "public debt",
+        "sovereign debt", "government bond", "bond yield",
+        # Credit / rating actions
+        "credit rating", "rating downgrade", "rating upgrade", "default risk",
+        # Fiscal signals (catches "fiscal framework", "fiscal policy", "fiscal deficit")
+        "fiscal", "debt default",
     ],
     "💳 Alternative Lending": [
         "private credit", "private debt", "direct lending",
