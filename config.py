@@ -31,9 +31,13 @@ CATEGORIES = {
         "currency devaluation", "capital flows",
     ],
     "📊 Indexes": [
-        "S&P 500", "Nasdaq", "Dow Jones", "Nikkei", "Hang Seng", "MSCI",
-        "market rally", "market selloff", "index futures",
-        "market futures", "ETF", "weekly close",
+        # Use composite/performance phrases — NOT bare "Nasdaq" which matches any NASDAQ-listed company
+        "S&P 500", "Dow Jones", "Dow futures", "Dow rises", "Dow falls",
+        "Nasdaq Composite", "Nasdaq 100", "Nasdaq futures", "Nasdaq rises", "Nasdaq falls",
+        "Nikkei 225", "Hang Seng Index", "MSCI index",
+        "market futures", "index futures", "stock index",
+        "market rally", "market selloff", "stocks rise", "stocks fall",
+        "market closes", "market opens", "weekly close",
     ],
     "🌏 Regional (APAC / ASEAN)": [
         "ASEAN", "Southeast Asia", "APAC", "Asia markets",
@@ -241,11 +245,15 @@ TRUSTED_SOURCES = [
 # Articles from these domains are discarded regardless of keyword match.
 # ---------------------------------------------------------------------------
 BLOCKED_DOMAINS = [
-    "barchart.com",     # commodity charts — keeps matching FX keywords with cocoa/grain stories
-    "triblive.com",     # local Pittsburgh news — zero relevance to finance
-    "msn.com",          # aggregator with poor relevance on free-tier keyword queries
-    "patch.com",        # hyper-local US community news
-    "legacy.com",       # obituaries
+    "barchart.com",         # commodity charts — keeps matching FX keywords with cocoa/grain stories
+    "triblive.com",         # local Pittsburgh news — zero relevance to finance
+    "msn.com",              # aggregator with poor relevance on free-tier keyword queries
+    "patch.com",            # hyper-local US community news
+    "legacy.com",           # obituaries
+    "cryptobreaking.com",   # crypto press releases — matches "Nasdaq listing" SPAC deals
+    "globenewswire.com",    # raw press releases — company announcements, not market news
+    "prnewswire.com",       # same — press releases not editorial news
+    "businesswire.com",     # same
 ]
 
 # ---------------------------------------------------------------------------
@@ -269,9 +277,13 @@ TITLE_REQUIRED_TERMS = {
         "devaluation", "appreciation", "depreciation", "central bank",
     ],
     "📊 Indexes": [
-        "s&p 500", "nasdaq", "dow", "nikkei", "hang seng", "msci", "index",
-        "indices", "futures", "etf", "market rally", "market selloff",
-        "stock market", "equity market",
+        # Require index-performance language — reject "Nasdaq listing" / "NASDAQ: TICK" articles
+        "s&p 500", "dow jones", "dow futures", "dow rises", "dow falls", "dow bounces",
+        "nasdaq composite", "nasdaq 100", "nasdaq futures", "nasdaq rises", "nasdaq falls",
+        "nikkei 225", "hang seng index", "msci index",
+        "market futures", "index futures", "stock index", "stock indices",
+        "market rally", "market selloff", "stocks rise", "stocks fall",
+        "market closes", "market opens",
     ],
     "🌏 Regional (APAC / ASEAN)": [
         "asia", "asean", "apac", "singapore", "indonesia", "malaysia",
