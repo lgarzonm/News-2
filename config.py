@@ -78,10 +78,15 @@ CATEGORIES = {
         "sustainability",
     ],
     "📣 Marketing": [
-        "advertising", "digital marketing", "ad spend",
-        "marketing campaign", "consumer trends", "product launch",
-        "social media marketing", "growth strategy", "market share",
-        "brand strategy",
+        # Brand/sponsorship actions
+        "sponsorship deal", "title sponsor", "brand partnership", "brand ambassador",
+        "brand campaign", "brand activation", "brand launch", "rebranding",
+        # Agency / campaign actions
+        "creative pitch", "ad agency", "advertising campaign", "campaign launch",
+        # Product marketing
+        "product launch", "marketing strategy",
+        # Trade media (Marketing Interactive covers Asia marketing news)
+        "marketing interactive",
     ],
     "🎭 Entertainment (Singapore)": [
         "Singapore events", "concert Singapore", "theatre Singapore",
@@ -166,6 +171,7 @@ WEEKEND_KEYWORDS = {
 GEO_PREFIX = {
     "🌏 Regional (APAC / ASEAN)": "Asia OR ASEAN OR Southeast Asia",
     "💻 Fintech":                 "Asia OR ASEAN OR Southeast Asia",
+    "📣 Marketing":               "Asia OR Singapore",   # keeps focus on Asia brand/campaign news
     # Country Credit, Alternative Lending, and Sustainable Finance are global —
     # restricting to Asia misses S&P/Fitch/Moody's global actions, Middle East
     # war credit risk, oil price fiscal stress, etc.
@@ -257,6 +263,8 @@ BLOCKED_DOMAINS = [
     "cryptobreaking.com",   # crypto press releases — matches "Nasdaq listing" SPAC deals
     "marketscreener.com",   # corporate news aggregator — publishes deals/deployments not macro news
     "globenewswire.com",    # raw press releases — company announcements, not market news
+    "mylondon.news",        # local London community news — zero relevance to Asia finance/marketing
+    "india.com",            # low-quality aggregator — thought-leadership fluff, not news
     "prnewswire.com",       # same — press releases not editorial news
     "businesswire.com",     # same
 ]
@@ -321,10 +329,11 @@ TITLE_REQUIRED_TERMS = {
         "esg", "green bond", "sustainable", "climate", "carbon", "net zero",
         "renewable", "energy transition", "impact invest", "clean energy",
     ],
-    "📣 Marketing": [
-        "marketing", "advertising", "brand", "campaign", "consumer",
-        "ad spend", "social media", "digital marketing", "market share",
-    ],
+    # Marketing: no title filter — GEO_PREFIX (Asia OR Singapore) + specific
+    # action keywords already gate quality. Brand narrative articles from
+    # Marketing Interactive RSS ("Singapore Airlines turns Miffy into co-pilot")
+    # don't carry standard marketing keywords in the title and would be
+    # incorrectly blocked. Let the source + geo do the work here.
     "🎭 Entertainment (Singapore)": [
         "singapore", "sentosa", "marina bay", "concert", "festival",
         "theatre", "theater", "exhibition", "restaurant", "event",
@@ -431,6 +440,10 @@ RSS_FEEDS = {
     "🌱 Sustainable Finance": [
         "https://renewablesnow.com/feed/",
         "https://feeds.reuters.com/reuters/environment",
+    ],
+    # Marketing: Marketing Interactive is the #1 Asia marketing trade publication
+    "📣 Marketing": [
+        "https://www.marketing-interactive.com/feed/",
     ],
 }
 
