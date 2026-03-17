@@ -266,6 +266,8 @@ BLOCKED_DOMAINS = [
     "globenewswire.com",    # raw press releases — company announcements, not market news
     "mylondon.news",        # local London community news — zero relevance to Asia finance/marketing
     "india.com",            # low-quality aggregator — thought-leadership fluff, not news
+    "essentiallysports.com",# sports celebrity news — matches "event" keyword but never Singapore content
+    "manilatimes.net",      # Philippines newspaper republishing PR Newswire via /tmt-newswire/ path
     "prnewswire.com",       # same — press releases not editorial news
     "businesswire.com",     # same
 ]
@@ -336,14 +338,11 @@ TITLE_REQUIRED_TERMS = {
     # don't carry standard marketing keywords in the title and would be
     # incorrectly blocked. Let the source + geo do the work here.
     "🎭 Entertainment (Singapore)": [
-        # Geographic anchors
+        # Geographic anchors ONLY — non-geo terms like "event", "food", "bar"
+        # are too broad and let in non-Singapore articles (e.g. golf tournaments).
+        # Every Singapore entertainment article will mention a Singapore location.
         "singapore", "sentosa", "marina bay", "orchard",
-        # Events & venues
-        "concert", "festival", "theatre", "theater", "exhibition", "event",
-        # Dining & lifestyle (Time Out Singapore focus)
-        "restaurant", "michelin", "opens in singapore", "opening singapore",
-        "things to do", "best restaurants", "shophouse", "design orchard",
-        "asia's 50 best", "food", "bar",
+        "suntec", "clarke quay", "chinatown", "esplanade",
     ],
 }
 
