@@ -152,9 +152,22 @@ def _get_keywords(category: str) -> list[str]:
 
 
 def _build_keyword_query(category: str) -> str:
-    """OR-batch all keywords for a category into one query string."""
+    """OR-batch all keywords for a category into one query string.
+
+    Keywords are quoted if they:
+    - contain a space (multi-word phrase), OR
+    - contain special chars that NewsAPI's boolean parser interprets as
+      operators: & (AND operator), ' (tokenisation break), : / ( )
+    Example: S&P → "S&P", Moody's → "Moody's" — without quotes, & and '
+    can silently corrupt the boolean chain from that position onward.
+    """
+    _SPECIAL = frozenset("&':/() ")
+
+    def _quote(kw: str) -> str:
+        return f'"{kw}"' if any(c in kw for c in _SPECIAL) else kw
+
     keywords = _get_keywords(category)
-    keyword_part = " OR ".join(f'"{kw}"' if " " in kw else kw for kw in keywords)
+    keyword_part = " OR ".join(_quote(kw) for kw in keywords)
     geo = GEO_PREFIX.get(category)
     if geo:
         return f"({keyword_part}) AND ({geo})"
