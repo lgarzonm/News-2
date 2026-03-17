@@ -1,9 +1,9 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 import pandas as pd
 import streamlit as st
 
 from config import CATEGORIES
-from news_fetcher import fetch_all_categories, is_off_hours
+from news_fetcher import fetch_all_categories, fetch_articles_for_category, _get_window_hours, is_off_hours
 from llm_processor import enrich_articles
 
 # ---------------------------------------------------------------------------
@@ -299,6 +299,42 @@ else:
         file_name=f"helicap_news_{run_date}.csv",
         mime="text/csv",
     )
+
+# ---------------------------------------------------------------------------
+# Debug Mode
+# ---------------------------------------------------------------------------
+with st.expander("🛠 Debug Mode — Test a single category"):
+    st.caption("Fetch raw articles for one category without running the full refresh or calling the AI. Useful for checking which categories have results.")
+
+    debug_category = st.selectbox(
+        "Category to test",
+        options=list(CATEGORIES.keys()),
+        key="debug_category_select",
+    )
+
+    if st.button("🔍 Test this category", key="debug_fetch_btn"):
+        window_hours = _get_window_hours()
+        window_start = datetime.now(timezone.utc) - timedelta(hours=window_hours)
+        with st.spinner(f"Fetching '{debug_category}'…"):
+            try:
+                articles = fetch_articles_for_category(debug_category, window_start)
+            except Exception as e:
+                st.error(f"Error: {e}")
+                articles = []
+
+        if not articles:
+            st.warning(f"No articles found in the last {window_hours}h for this category.")
+        else:
+            st.success(f"{len(articles)} article(s) found — no AI summary, raw data only.")
+            for a in articles:
+                trusted = "✓ trusted" if a.get("trusted") else "· unverified"
+                pub = a.get("published_at", "")[:16].replace("T", " ")
+                st.markdown(f"""
+**{a['title']}**
+`{a['source']}` {trusted} · `{pub}`
+{a.get('url', '')}
+---""")
+
 
 # ---------------------------------------------------------------------------
 # Footer
