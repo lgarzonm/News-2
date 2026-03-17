@@ -343,7 +343,25 @@ TITLE_CONTEXT_TERMS = {
 }
 
 # ---------------------------------------------------------------------------
-# Guardian API  — section IDs per category for tighter relevance
+# Global event bypass — for the Regional category, major worldwide geopolitical
+# or macroeconomic crises bypass the APAC geo + context compound gate entirely.
+# These terms signal events so significant they belong in any regional briefing
+# regardless of geography (e.g. Iran war, Venezuela coup, global sanctions).
+# ---------------------------------------------------------------------------
+TITLE_GLOBAL_BYPASS_TERMS = {
+    "🌏 Regional (APAC / ASEAN)": [
+        # Armed conflict / geopolitical crisis
+        "war", "invasion", "coup", "takeover", "overthrow", "uprising", "civil war",
+        "airstrike", "air strike", "missile", "nuclear", "troops", "military strike",
+        "bombing", "ceasefire", "cease-fire", "sanctions", "conflict", "assassination",
+        "siege", "blockade", "offensive", "attack on", "crisis",
+        # Major economic shocks
+        "global recession", "market crash", "financial crisis", "debt default",
+        "oil embargo", "energy crisis", "supply shock",
+    ],
+}
+
+  — section IDs per category for tighter relevance
 # https://open-platform.theguardian.com/  (free, 500 req/day)
 # ---------------------------------------------------------------------------
 GUARDIAN_SECTIONS = {

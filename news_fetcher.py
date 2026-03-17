@@ -16,6 +16,7 @@ from config import (
     BLOCKED_DOMAINS,
     TITLE_REQUIRED_TERMS,
     TITLE_CONTEXT_TERMS,
+    TITLE_GLOBAL_BYPASS_TERMS,
     GUARDIAN_SECTIONS,
     RSS_FEEDS,
 )
@@ -78,20 +79,31 @@ def _is_blocked(url: str) -> bool:
 
 def _is_title_relevant(title: str, category: str) -> bool:
     """
-    Return True only if the article title passes both gate checks:
-    1. Contains at least one term from TITLE_REQUIRED_TERMS (topic/geo gate)
-    2. If TITLE_CONTEXT_TERMS is defined for the category, also contains at
-       least one economic/financial context term (compound AND gate).
+    Three-layer title gate:
 
-    This prevents body-matched noise (e.g. "small modular reactor in Southeast
-    Asia" passing the Regional geo gate but failing the economics context gate).
+    1. BYPASS: If the title signals a major global event (war, coup, sanctions,
+       missile strike, financial crisis…), pass immediately — these belong in
+       the Regional briefing regardless of geography.
+    2. GEO/TOPIC GATE: Title must contain at least one term from
+       TITLE_REQUIRED_TERMS (geographic or topic anchor).
+    3. CONTEXT GATE: If TITLE_CONTEXT_TERMS is defined, title must also
+       contain an economic/financial context term (AND with layer 2).
+
+    This lets through: APAC macro news + major world events.
+    This blocks: corporate tech deals that happen to mention "Southeast Asia".
     """
     required = TITLE_REQUIRED_TERMS.get(category)
     if not required:
         return True   # no filter defined for this category — allow all
     t = title.lower()
+    # Layer 1 — global event bypass
+    bypass = TITLE_GLOBAL_BYPASS_TERMS.get(category)
+    if bypass and any(term in t for term in bypass):
+        return True
+    # Layer 2 — geo/topic gate
     if not any(term in t for term in required):
         return False
+    # Layer 3 — economic context gate
     context = TITLE_CONTEXT_TERMS.get(category)
     if context and not any(term in t for term in context):
         return False
