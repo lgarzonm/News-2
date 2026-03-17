@@ -171,7 +171,10 @@ WEEKEND_KEYWORDS = {
 GEO_PREFIX = {
     "🌏 Regional (APAC / ASEAN)": "Asia OR ASEAN OR Southeast Asia",
     "💻 Fintech":                 "Asia OR ASEAN OR Southeast Asia",
-    "📣 Marketing":               "Asia OR Singapore",   # keeps focus on Asia brand/campaign news
+    # Marketing: no geo restriction — major global campaigns (Apple iPhone launch,
+    # F1, FIFA World Cup) should appear alongside Asia brand news. The specific
+    # action keywords (title sponsor, creative pitch, brand campaign…) already
+    # gate quality without needing a geographic filter.
     # Country Credit, Alternative Lending, and Sustainable Finance are global —
     # restricting to Asia misses S&P/Fitch/Moody's global actions, Middle East
     # war credit risk, oil price fiscal stress, etc.
@@ -180,7 +183,11 @@ GEO_PREFIX = {
 }
 
 # NewsAPI source restriction for Entertainment only
-ENTERTAINMENT_SOURCES = "straits-times,time-out-singapore,the-business-times"
+# NOTE: free-tier NewsAPI source IDs must be exact matches from the /sources endpoint.
+# "time-out-singapore" and "the-business-times" are not valid IDs — using only
+# "the-straits-times" which is confirmed valid. Entertainment is primarily served
+# by the Time Out Singapore RSS feed; NewsAPI is a secondary fallback here.
+ENTERTAINMENT_SOURCES = "the-straits-times"
 
 # ---------------------------------------------------------------------------
 # Trusted source domains  (post-filter flag; domain-restrict on paid tier)
@@ -335,8 +342,14 @@ TITLE_REQUIRED_TERMS = {
     # don't carry standard marketing keywords in the title and would be
     # incorrectly blocked. Let the source + geo do the work here.
     "🎭 Entertainment (Singapore)": [
-        "singapore", "sentosa", "marina bay", "concert", "festival",
-        "theatre", "theater", "exhibition", "restaurant", "event",
+        # Geographic anchors
+        "singapore", "sentosa", "marina bay", "orchard",
+        # Events & venues
+        "concert", "festival", "theatre", "theater", "exhibition", "event",
+        # Dining & lifestyle (Time Out Singapore focus)
+        "restaurant", "michelin", "opens in singapore", "opening singapore",
+        "things to do", "best restaurants", "shophouse", "design orchard",
+        "asia's 50 best", "food", "bar",
     ],
 }
 
@@ -411,7 +424,8 @@ RSS_FEEDS = {
         "https://feeds.reuters.com/reuters/businessNews",  # covers Deutsche Bank / private credit stories
     ],
     "🎭 Entertainment (Singapore)": [
-        "https://www.straitstimes.com/news/life/rss.xml",
+        "https://www.timeout.com/singapore/feed/rss",        # Time Out Singapore — primary source
+        "https://www.straitstimes.com/news/life/rss.xml",   # Straits Times Life section
     ],
     # Stocks/Indexes: investing.com RSS as extra source
     "📈 Stocks": [
