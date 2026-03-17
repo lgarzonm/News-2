@@ -375,7 +375,7 @@ TITLE_GLOBAL_BYPASS_TERMS = {
     ],
 }
 
-  — section IDs per category for tighter relevance
+# — section IDs per category for tighter relevance
 # https://open-platform.theguardian.com/  (free, 500 req/day)
 # ---------------------------------------------------------------------------
 GUARDIAN_SECTIONS = {
