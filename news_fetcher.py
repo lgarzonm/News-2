@@ -12,7 +12,6 @@ from config import (
     CATEGORIES,
     WEEKEND_KEYWORDS,
     GEO_PREFIX,
-    ENTERTAINMENT_SOURCES,
     TRUSTED_SOURCES,
     BLOCKED_DOMAINS,
     TITLE_REQUIRED_TERMS,
@@ -215,8 +214,9 @@ def _fetch_via_newsapi(category: str, window_start: datetime) -> list[dict]:
         "page_size":  10,
         "language":   "en",
     }
-    if category == ENTERTAINMENT_CATEGORY:
-        kwargs["sources"] = ENTERTAINMENT_SOURCES
+    # NOTE: do NOT add sources= here — NewsAPI source IDs are unreliable on
+    # the free tier. Entertainment quality is controlled by GEO_PREFIX
+    # ("Singapore") in the query and by the Time Out Singapore RSS feed.
 
     try:
         response = _newsapi_client.get_everything(**kwargs)

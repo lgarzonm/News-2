@@ -182,12 +182,6 @@ GEO_PREFIX = {
     "🎭 Entertainment (Singapore)": "Singapore",
 }
 
-# NewsAPI source restriction for Entertainment only
-# NOTE: free-tier NewsAPI source IDs must be exact matches from the /sources endpoint.
-# "time-out-singapore" and "the-business-times" are not valid IDs — using only
-# "the-straits-times" which is confirmed valid. Entertainment is primarily served
-# by the Time Out Singapore RSS feed; NewsAPI is a secondary fallback here.
-ENTERTAINMENT_SOURCES = "the-straits-times"
 
 # ---------------------------------------------------------------------------
 # Trusted source domains  (post-filter flag; domain-restrict on paid tier)
