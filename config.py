@@ -21,10 +21,14 @@ CATEGORIES = {
         "market cap", "valuation", "guidance",
     ],
     "💵 Currencies (Fiat / FX)": [
-        "EUR/USD", "GBP/USD", "USD/JPY", "AUD/USD",        # pair names appear verbatim in FX titles
-        "dollar", "DXY", "exchange rate", "central bank",
-        "rate hike", "inflation", "currency", "forex",
-        "devaluation", "rate cut",
+        "EUR/USD", "GBP/USD", "USD/JPY", "AUD/USD",        # major pairs — appear verbatim in FX titles
+        "USD/SGD", "USD/MYR", "USD/IDR", "USD/THB",        # APAC pairs
+        "dollar index", "DXY", "dollar strengthens", "dollar weakens",
+        "greenback", "exchange rate", "forex market",
+        "ringgit", "rupiah", "baht", "peso falls", "won strengthens",
+        "currency intervention", "FX reserves", "spot rate",
+        "central bank rate", "rate hike", "rate cut",
+        "currency devaluation", "capital flows",
     ],
     "📊 Indexes": [
         "S&P 500", "Nasdaq", "Dow Jones", "Nikkei", "Hang Seng", "MSCI",
@@ -94,9 +98,11 @@ WEEKEND_KEYWORDS = {
     ],
     "💵 Currencies (Fiat / FX)": [
         "EUR/USD", "GBP/USD", "USD/JPY", "AUD/USD",
+        "USD/SGD", "USD/MYR", "USD/IDR",
         "forex analysis", "currency forecast", "dollar outlook",
-        "FX week ahead", "support level", "resistance level",
-        "currency technical analysis",
+        "FX week ahead", "forex technical analysis",
+        "ringgit outlook", "rupiah forecast", "baht outlook",
+        "currency market outlook", "FX market preview",
     ],
     "📊 Indexes": [
         "market outlook week", "index forecast", "S&P 500 outlook",
@@ -167,25 +173,67 @@ ENTERTAINMENT_SOURCES = "straits-times,time-out-singapore,the-business-times"
 # Weekend-active sources like investing.com and fxstreet.com are included.
 # ---------------------------------------------------------------------------
 TRUSTED_SOURCES = [
-    # Global Finance & News
-    "reuters.com", "bloomberg.com", "ft.com", "cnbc.com",
-    "barrons.com", "theguardian.com", "bbc.com",
-    "marketwatch.com", "wsj.com",
-    # FX / Markets (publish 24/7)
-    "investing.com", "fxstreet.com",
-    # Analysis / Aggregators
+    # ── Tier-1 Global News Wires & Press ───────────────────────────────────
+    "reuters.com", "apnews.com", "bloomberg.com", "ft.com",
+    "wsj.com", "nytimes.com", "theguardian.com", "bbc.com",
+    "economist.com", "cnbc.com", "marketwatch.com",
+
+    # ── Business / Investment Press ────────────────────────────────────────
+    "barrons.com", "forbes.com", "fortune.com",
+    "businessinsider.com", "morningstar.com",
     "seekingalpha.com", "thestreet.com",
-    # Asia / Singapore
-    "straitstimes.com", "businesstimes.com.sg",
-    "channelnewsasia.com", "thestar.com.my",
-    # Fintech & Start-ups
-    "fintechnews.sg", "fintech.global", "techinasia.com",
-    # Sustainable Finance
-    "renewablesnow.com", "esgnews.com",
-    # Alternative Lending
+
+    # ── FX / Forex (24/7 coverage) ────────────────────────────────────────
+    "investing.com", "fxstreet.com", "forexlive.com",
+    "dailyfx.com", "fxempire.com",
+
+    # ── Asia — Regional Tier-1 ────────────────────────────────────────────
+    "nikkei.com", "asia.nikkei.com",          # Nikkei Asia (Japan + APAC)
+    "scmp.com",                                # South China Morning Post
+    "straitstimes.com",                        # Singapore flagship
+    "businesstimes.com.sg",                    # Singapore business
+    "channelnewsasia.com",                     # CNA (Singapore/ASEAN)
+    "todayonline.com",                         # Singapore Today
+    "theedgesingapore.com", "theedgemarkets.com",  # The Edge (SG + MY)
+    "thestar.com.my",                          # Malaysia
+    "bangkokpost.com",                         # Thailand
+    "thejakartapost.com",                      # Indonesia
+    "vietnamnews.vn",                          # Vietnam
+
+    # ── APAC Deals / Start-ups / Tech ────────────────────────────────────
+    "dealstreetasia.com",  # APAC M&A, VC, PE deals
+    "techinasia.com",      # Southeast Asia tech & startups
+    "e27.co",              # Singapore/SEA startup ecosystem
+    "krasia.com",          # KrASIA — APAC digital economy
+
+    # ── Fintech ────────────────────────────────────────────────────────────
+    "fintechnews.sg",      # Singapore fintech
+    "fintech.global",      # Global fintech
+    "pymnts.com",          # Payments & fintech (US/global)
+    "fintechfutures.com",  # Banking & fintech
+    "crowdfundinsider.com",# Alt-finance, BNPL, lending platforms
+
+    # ── Alternative Lending / Private Credit ─────────────────────────────
     "altfi.com",
-    # Singapore Entertainment
-    "timeout.com",
+    "privateequitywire.co.uk",
+    "privatedebtinvestor.com",
+
+    # ── Sustainable Finance / ESG ─────────────────────────────────────────
+    "esgnews.com", "responsible-investor.com",
+    "greenbiz.com", "environmentalfinance.com",
+    "renewablesnow.com", "climateaction.org",
+
+    # ── Global Tech & Start-ups ───────────────────────────────────────────
+    "techcrunch.com", "venturebeat.com",
+
+    # ── Marketing & Advertising ───────────────────────────────────────────
+    "adage.com", "marketingweek.com",
+    "campaignasia.com",    # Campaign Asia — highly relevant for the region
+
+    # ── Singapore Entertainment & Lifestyle ───────────────────────────────
+    "timeout.com",         # Time Out Singapore
+    "visitsingapore.com",  # Singapore Tourism Board
+    "asiaone.com",         # Singapore lifestyle/events
 ]
 
 # ---------------------------------------------------------------------------
