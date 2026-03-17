@@ -48,11 +48,11 @@ CATEGORIES = {
     "🏦 Country Credit": [
         # Rating agencies (bare names catch any headline form)
         "Moody's", "Fitch", "S&P",
-        # Sovereign / government debt
-        "sovereign debt", "government bond", "bond yield",
+        # Sovereign / government debt — high-frequency daily terms
+        "sovereign debt", "government bond", "bond yield", "treasury yield",
         # Credit / rating actions
-        "credit rating", "rating downgrade", "rating upgrade", "default risk",
-        # Fiscal signals (catches "fiscal framework", "fiscal policy", "fiscal deficit")
+        "credit rating", "rating downgrade", "rating upgrade",
+        # Fiscal signals
         "fiscal", "debt default",
     ],
     "💳 Alternative Lending": [
@@ -430,11 +430,15 @@ RSS_FEEDS = {
     ],
     # Regional & Country Credit: CNA covers ASEAN daily
     "🌏 Regional (APAC / ASEAN)": [
-        "https://www.channelnewsasia.com/api/v1/rss-outbound-feed?_format=xml&category=6511",  # Asia
+        "https://www.channelnewsasia.com/rssfeeds/8395884",   # CNA Asia Pacific news (correct feed ID)
     ],
     "🏦 Country Credit": [
-        "https://www.channelnewsasia.com/api/v1/rss-outbound-feed?_format=xml&category=6511",
-        "https://feeds.reuters.com/reuters/businessNews",
+        # investing.com bond markets section — active daily, covers yields, ratings, sovereign debt
+        "https://www.investing.com/rss/news_285.rss",
+        # Reuters top news (new URL format post-2022 redesign)
+        "https://feeds.reuters.com/reuters/topNews",
+        # CNBC finance — covers Fed, bond yields, rating agency actions
+        "https://www.cnbc.com/id/10000664/device/rss/rss.html",
     ],
     # Fintech: Fintech News Singapore
     "💻 Fintech": [
