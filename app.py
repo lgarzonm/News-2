@@ -211,16 +211,42 @@ st.markdown(f"""
 <div class="helicap-header">
     <div>
         <h1>🔵 Helicap News</h1>
+        <div class="timestamp" style="color:#7B93B8; font-size:0.75rem; margin-top:0.1rem;">
+            Curated by AI · Designed by Laura Garzon
+        </div>
         <div class="timestamp">Last updated: {last_updated}</div>
     </div>
 </div>
 """, unsafe_allow_html=True)
 
-# Refresh button — sits below header, full width via CSS
+# ---------------------------------------------------------------------------
+# Controls — category filter + article count slider
+# ---------------------------------------------------------------------------
+all_category_keys = list(CATEGORIES.keys())
+
+selected_categories = st.multiselect(
+    "Categories to fetch",
+    options=all_category_keys,
+    default=all_category_keys,
+    help="Deselect categories you don't need — saves API quota.",
+)
+
+max_articles = st.slider(
+    "Articles per category",
+    min_value=1,
+    max_value=5,
+    value=2,
+    help="Note: niche categories (e.g. Alternative Lending) may have fewer articles available in the last 24 h.",
+)
+
+# Refresh button — sits below controls, full width via CSS
 if st.button("🔄 Refresh News"):
+    if not selected_categories:
+        st.warning("Please select at least one category.")
+        st.stop()
     with st.spinner("Fetching latest articles and generating summaries…"):
         try:
-            raw_results, window_hours = fetch_all_categories()
+            raw_results, window_hours = fetch_all_categories(selected_categories, max_articles)
         except RuntimeError as e:
             err_msg = str(e).lower()
             if "quota exhausted" in err_msg or "429" in err_msg or "426" in err_msg or "ratelimited" in err_msg:
@@ -272,8 +298,10 @@ else:
             f"🌙 Weekend / off-hours mode · Showing analysis, previews & forecasts "
             f"· Last {window_hours} hours"
         )
-    # Render each category
-    for category in CATEGORIES:
+    # Render each category (only the ones that were fetched)
+    for category in all_category_keys:
+        if category not in results:
+            continue
         articles = results.get(category, [])
 
         st.markdown(f'<div class="category-badge">{category}</div>', unsafe_allow_html=True)
@@ -320,7 +348,7 @@ with st.expander("🛠 Debug Mode — Test a single category"):
         window_start = datetime.now(timezone.utc) - timedelta(hours=window_hours)
         with st.spinner(f"Fetching '{debug_category}'…"):
             try:
-                articles = fetch_articles_for_category(debug_category, window_start)
+                articles = fetch_articles_for_category(debug_category, window_start, max_articles)
             except Exception as e:
                 st.error(f"Error: {e}")
                 articles = []

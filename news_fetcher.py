@@ -216,7 +216,7 @@ def _merge_unique(base: list[dict], new_articles: list[dict], limit: int = 2) ->
 # NewsAPI fetcher
 # ---------------------------------------------------------------------------
 
-def _fetch_via_newsapi(category: str, window_start: datetime) -> list[dict]:
+def _fetch_via_newsapi(category: str, window_start: datetime, max_articles: int = 2) -> list[dict]:
     from_param = window_start.strftime("%Y-%m-%dT%H:%M:%S")
     query = _build_keyword_query(category)
 
@@ -224,7 +224,7 @@ def _fetch_via_newsapi(category: str, window_start: datetime) -> list[dict]:
         "q":          query,
         "from_param": from_param,
         "sort_by":    "publishedAt",
-        "page_size":  10,
+        "page_size":  max(10, max_articles * 3),
         "language":   "en",
     }
     # NOTE: do NOT add sources= here — NewsAPI source IDs are unreliable on
@@ -245,7 +245,7 @@ def _fetch_via_newsapi(category: str, window_start: datetime) -> list[dict]:
     seen_urls:   set[str]  = set()
     seen_titles: list[str] = []
     for raw in response.get("articles", []):
-        if len(found) >= 2:
+        if len(found) >= max_articles:
             break
         title = raw.get("title", "")
         url   = raw.get("url", "")
@@ -293,7 +293,7 @@ def _gnews_single_keyword(keyword: str, geo: str | None, from_param: str) -> lis
     return data.get("articles", [])
 
 
-def _fetch_via_gnews(category: str, window_start: datetime) -> list[dict]:
+def _fetch_via_gnews(category: str, window_start: datetime, max_articles: int = 2) -> list[dict]:
     if not GNEWS_API_KEY:
         return []
 
@@ -304,7 +304,7 @@ def _fetch_via_gnews(category: str, window_start: datetime) -> list[dict]:
     seen_titles: list[str]  = []
 
     for keyword in _get_keywords(category):
-        if len(found) >= 2:
+        if len(found) >= max_articles:
             break
         try:
             articles = _gnews_single_keyword(keyword, geo, from_param)
@@ -312,7 +312,7 @@ def _fetch_via_gnews(category: str, window_start: datetime) -> list[dict]:
             continue   # skip this keyword, try the next
 
         for raw in articles:
-            if len(found) >= 2:
+            if len(found) >= max_articles:
                 break
             title = raw.get("title", "")
             url   = raw.get("url", "")
@@ -340,7 +340,7 @@ def _fetch_via_gnews(category: str, window_start: datetime) -> list[dict]:
 # Register at https://open-platform.theguardian.com/
 # ---------------------------------------------------------------------------
 
-def _fetch_via_guardian(category: str, window_start: datetime) -> list[dict]:
+def _fetch_via_guardian(category: str, window_start: datetime, max_articles: int = 2) -> list[dict]:
     if not GUARDIAN_API_KEY:
         return []
     if category not in GUARDIAN_SECTIONS:
@@ -356,7 +356,7 @@ def _fetch_via_guardian(category: str, window_start: datetime) -> list[dict]:
         "from-date":   window_start.strftime("%Y-%m-%d"),
         "order-by":    "newest",
         "show-fields": "trailText",
-        "page-size":   5,
+        "page-size":   max(5, max_articles),
         "api-key":     GUARDIAN_API_KEY,
     }
 
@@ -371,7 +371,7 @@ def _fetch_via_guardian(category: str, window_start: datetime) -> list[dict]:
     found: list[dict] = []
 
     for item in results:
-        if len(found) >= 2:
+        if len(found) >= max_articles:
             break
         pub_date = item.get("webPublicationDate", "")
         if not _is_within_window(pub_date, window_start):
@@ -397,7 +397,7 @@ def _fetch_via_guardian(category: str, window_start: datetime) -> list[dict]:
 # Used for categories where API sources have weak coverage.
 # ---------------------------------------------------------------------------
 
-def _fetch_via_rss(category: str, window_start: datetime) -> list[dict]:
+def _fetch_via_rss(category: str, window_start: datetime, max_articles: int = 2) -> list[dict]:
     feed_urls = RSS_FEEDS.get(category, [])
     if not feed_urls:
         return []
@@ -407,7 +407,7 @@ def _fetch_via_rss(category: str, window_start: datetime) -> list[dict]:
     seen_titles: list[str]  = []
 
     for feed_url in feed_urls:
-        if len(found) >= 2:
+        if len(found) >= max_articles:
             break
         try:
             feed = feedparser.parse(feed_url)
@@ -415,7 +415,7 @@ def _fetch_via_rss(category: str, window_start: datetime) -> list[dict]:
             continue
 
         for entry in feed.entries:
-            if len(found) >= 2:
+            if len(found) >= max_articles:
                 break
             url   = entry.get("link", "")
             title = entry.get("title", "")
@@ -486,78 +486,84 @@ def _is_rate_limit_error(err_lower: str) -> bool:
     return any(m in err_lower for m in _RATE_LIMIT_MARKERS)
 
 
-def fetch_articles_for_category(category: str, window_start: datetime) -> list[dict]:
+def fetch_articles_for_category(
+    category: str, window_start: datetime, max_articles: int = 2
+) -> list[dict]:
     """
     Full fallback chain — each source is tried in order and results are merged
-    until we have 2 articles.  Returns whatever was found (may be 0–2 articles).
+    until we have max_articles articles.  Returns whatever was found (may be 0–N).
 
     Chain: NewsAPI → GNews → Guardian API → RSS
-    Fallback triggers on BOTH rate-limit errors AND fewer-than-2 results, so
+    Fallback triggers on BOTH rate-limit errors AND fewer-than-max results, so
     a quiet weekend (0 results from NewsAPI) correctly continues to the next source.
     """
     articles: list[dict] = []
 
     # 1. NewsAPI
     try:
-        articles = _fetch_via_newsapi(category, window_start)
+        articles = _fetch_via_newsapi(category, window_start, max_articles)
     except RuntimeError as e:
         if not _is_rate_limit_error(str(e).lower()):
             raise  # non-quota errors (bad key, network) bubble up immediately
 
-    if len(articles) >= 2:
+    if len(articles) >= max_articles:
         return articles
 
     # 2. GNews
     try:
-        gnews = _fetch_via_gnews(category, window_start)
-        articles = _merge_unique(articles, gnews)
+        gnews = _fetch_via_gnews(category, window_start, max_articles)
+        articles = _merge_unique(articles, gnews, max_articles)
     except Exception:
         pass
 
-    if len(articles) >= 2:
+    if len(articles) >= max_articles:
         return articles
 
     # 3. Guardian API
     try:
-        guardian = _fetch_via_guardian(category, window_start)
-        articles = _merge_unique(articles, guardian)
+        guardian = _fetch_via_guardian(category, window_start, max_articles)
+        articles = _merge_unique(articles, guardian, max_articles)
     except Exception:
         pass
 
-    if len(articles) >= 2:
+    if len(articles) >= max_articles:
         return articles
 
     # 4. RSS (for categories that have feeds configured)
     try:
-        rss = _fetch_via_rss(category, window_start)
-        articles = _merge_unique(articles, rss)
+        rss = _fetch_via_rss(category, window_start, max_articles)
+        articles = _merge_unique(articles, rss, max_articles)
     except Exception:
         pass
 
     return articles
 
 
-def fetch_all_categories() -> dict[str, list[dict]]:
+def fetch_all_categories(
+    selected_categories: list[str] | None = None,
+    max_articles: int = 2,
+) -> tuple[dict[str, list[dict]], int]:
     """
-    Fetch articles for all 11 categories.
-    Uses a dynamic time window: 24 h on weekdays, 72 h on weekends/off-hours.
-    Per-category errors are recorded as {"error": <message>} entries so a
+    Fetch articles for the given categories (defaults to all 11).
+    Uses a dynamic time window: 24 h on weekdays, 48 h on weekends/off-hours.
+    Per-category errors are recorded as {"_error": <message>} entries so a
     single failing category never aborts the entire run.
     """
+    categories_to_fetch = selected_categories if selected_categories else list(CATEGORIES.keys())
     window_hours = _get_window_hours()
     window_start = datetime.now(timezone.utc) - timedelta(hours=window_hours)
     results: dict[str, list[dict]] = {}
     errors:  dict[str, str]        = {}
 
-    for category in CATEGORIES:
+    for category in categories_to_fetch:
         try:
-            results[category] = fetch_articles_for_category(category, window_start)
+            results[category] = fetch_articles_for_category(category, window_start, max_articles)
         except RuntimeError as e:
             results[category] = []
             errors[category]  = str(e)
 
     if errors:
-        if len(errors) == len(CATEGORIES):
+        if len(errors) == len(categories_to_fetch):
             sample = next(iter(errors.values()))
             raise RuntimeError(f"All categories failed. Sample error: {sample}")
         for category, msg in errors.items():

@@ -270,6 +270,8 @@ BLOCKED_DOMAINS = [
     "manilatimes.net",      # Philippines newspaper republishing PR Newswire via /tmt-newswire/ path
     "prnewswire.com",       # same — press releases not editorial news
     "businesswire.com",     # same
+    "mashviral.com",        # click-bait aggregator — zero editorial value
+    "devdiscourse.com",     # wire content aggregator — inconsistent quality
 ]
 
 # ---------------------------------------------------------------------------
