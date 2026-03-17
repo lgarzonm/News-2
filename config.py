@@ -46,19 +46,14 @@ CATEGORIES = {
         "emerging markets", "trade", "exports",
     ],
     "🏦 Country Credit": [
-        # Rating agencies — bare names catch any headline with Moody's/Fitch/S&P action
-        "Moody's", "Fitch", "S&P", "DBRS", "Scope Ratings",
+        # Rating agencies (bare names catch any headline form)
+        "Moody's", "Fitch", "S&P",
         # Sovereign / government debt
-        "sovereign debt", "sovereign rating", "sovereign credit",
-        "government bond", "government debt", "national debt",
-        "bond yield", "bond yields", "yield curve",
-        # Fiscal / credit events
-        "credit rating", "rating downgrade", "rating upgrade",
-        "rating cut", "outlook cut", "outlook stable", "outlook negative",
-        "fiscal deficit", "fiscal framework", "fiscal policy",
-        "debt crisis", "debt default", "default risk",
-        # Broader fiscal signals (catches "Thai fiscal framework", "budget review")
-        "fiscal", "government budget", "public debt",
+        "sovereign debt", "government bond", "bond yield",
+        # Credit / rating actions
+        "credit rating", "rating downgrade", "rating upgrade", "default risk",
+        # Fiscal signals (catches "fiscal framework", "fiscal policy", "fiscal deficit")
+        "fiscal", "debt default",
     ],
     "💳 Alternative Lending": [
         "private credit", "private debt", "direct lending",
@@ -83,10 +78,15 @@ CATEGORIES = {
         "sustainability",
     ],
     "📣 Marketing": [
-        "advertising", "digital marketing", "ad spend",
-        "marketing campaign", "consumer trends", "product launch",
-        "social media marketing", "growth strategy", "market share",
-        "brand strategy",
+        # Brand/sponsorship actions
+        "sponsorship deal", "title sponsor", "brand partnership", "brand ambassador",
+        "brand campaign", "brand activation", "brand launch", "rebranding",
+        # Agency / campaign actions
+        "creative pitch", "ad agency", "advertising campaign", "campaign launch",
+        # Product marketing
+        "product launch", "marketing strategy",
+        # Trade media (Marketing Interactive covers Asia marketing news)
+        "marketing interactive",
     ],
     "🎭 Entertainment (Singapore)": [
         "Singapore events", "concert Singapore", "theatre Singapore",
@@ -171,6 +171,10 @@ WEEKEND_KEYWORDS = {
 GEO_PREFIX = {
     "🌏 Regional (APAC / ASEAN)": "Asia OR ASEAN OR Southeast Asia",
     "💻 Fintech":                 "Asia OR ASEAN OR Southeast Asia",
+    # Marketing: no geo restriction — major global campaigns (Apple iPhone launch,
+    # F1, FIFA World Cup) should appear alongside Asia brand news. The specific
+    # action keywords (title sponsor, creative pitch, brand campaign…) already
+    # gate quality without needing a geographic filter.
     # Country Credit, Alternative Lending, and Sustainable Finance are global —
     # restricting to Asia misses S&P/Fitch/Moody's global actions, Middle East
     # war credit risk, oil price fiscal stress, etc.
@@ -179,7 +183,11 @@ GEO_PREFIX = {
 }
 
 # NewsAPI source restriction for Entertainment only
-ENTERTAINMENT_SOURCES = "straits-times,time-out-singapore,the-business-times"
+# NOTE: free-tier NewsAPI source IDs must be exact matches from the /sources endpoint.
+# "time-out-singapore" and "the-business-times" are not valid IDs — using only
+# "the-straits-times" which is confirmed valid. Entertainment is primarily served
+# by the Time Out Singapore RSS feed; NewsAPI is a secondary fallback here.
+ENTERTAINMENT_SOURCES = "the-straits-times"
 
 # ---------------------------------------------------------------------------
 # Trusted source domains  (post-filter flag; domain-restrict on paid tier)
@@ -262,6 +270,8 @@ BLOCKED_DOMAINS = [
     "cryptobreaking.com",   # crypto press releases — matches "Nasdaq listing" SPAC deals
     "marketscreener.com",   # corporate news aggregator — publishes deals/deployments not macro news
     "globenewswire.com",    # raw press releases — company announcements, not market news
+    "mylondon.news",        # local London community news — zero relevance to Asia finance/marketing
+    "india.com",            # low-quality aggregator — thought-leadership fluff, not news
     "prnewswire.com",       # same — press releases not editorial news
     "businesswire.com",     # same
 ]
@@ -326,13 +336,20 @@ TITLE_REQUIRED_TERMS = {
         "esg", "green bond", "sustainable", "climate", "carbon", "net zero",
         "renewable", "energy transition", "impact invest", "clean energy",
     ],
-    "📣 Marketing": [
-        "marketing", "advertising", "brand", "campaign", "consumer",
-        "ad spend", "social media", "digital marketing", "market share",
-    ],
+    # Marketing: no title filter — GEO_PREFIX (Asia OR Singapore) + specific
+    # action keywords already gate quality. Brand narrative articles from
+    # Marketing Interactive RSS ("Singapore Airlines turns Miffy into co-pilot")
+    # don't carry standard marketing keywords in the title and would be
+    # incorrectly blocked. Let the source + geo do the work here.
     "🎭 Entertainment (Singapore)": [
-        "singapore", "sentosa", "marina bay", "concert", "festival",
-        "theatre", "theater", "exhibition", "restaurant", "event",
+        # Geographic anchors
+        "singapore", "sentosa", "marina bay", "orchard",
+        # Events & venues
+        "concert", "festival", "theatre", "theater", "exhibition", "event",
+        # Dining & lifestyle (Time Out Singapore focus)
+        "restaurant", "michelin", "opens in singapore", "opening singapore",
+        "things to do", "best restaurants", "shophouse", "design orchard",
+        "asia's 50 best", "food", "bar",
     ],
 }
 
@@ -407,7 +424,8 @@ RSS_FEEDS = {
         "https://feeds.reuters.com/reuters/businessNews",  # covers Deutsche Bank / private credit stories
     ],
     "🎭 Entertainment (Singapore)": [
-        "https://www.straitstimes.com/news/life/rss.xml",
+        "https://www.timeout.com/singapore/feed/rss",        # Time Out Singapore — primary source
+        "https://www.straitstimes.com/news/life/rss.xml",   # Straits Times Life section
     ],
     # Stocks/Indexes: investing.com RSS as extra source
     "📈 Stocks": [
@@ -436,6 +454,10 @@ RSS_FEEDS = {
     "🌱 Sustainable Finance": [
         "https://renewablesnow.com/feed/",
         "https://feeds.reuters.com/reuters/environment",
+    ],
+    # Marketing: Marketing Interactive is the #1 Asia marketing trade publication
+    "📣 Marketing": [
+        "https://www.marketing-interactive.com/feed/",
     ],
 }
 
