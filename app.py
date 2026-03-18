@@ -111,11 +111,11 @@ html, body, [class*="css"] {
 
 /* ── Article card ────────────────────────────────────────────────────────── */
 .article-card {
-    background-color: #E8F9F2;
+    background-color: #EBF2FF;
     border-radius: 8px;
     padding: 1rem 1.25rem;
     margin-bottom: 0.75rem;
-    border-left: 4px solid #3DC98A;
+    border-left: 4px solid #1A56DB;
 }
 .article-title {
     font-family: 'DM Sans', sans-serif;
@@ -136,7 +136,7 @@ html, body, [class*="css"] {
     line-height: 1.5;
 }
 .sentiment-positive { color: #F0A500; font-weight: 600; font-size: 0.82rem; }
-.sentiment-negative { color: #3DC98A; font-weight: 600; font-size: 0.82rem; }
+.sentiment-negative { color: #E63946; font-weight: 600; font-size: 0.82rem; }
 .sentiment-neutral  { color: #6B7280; font-weight: 600; font-size: 0.82rem; }
 
 .no-articles {
@@ -148,7 +148,7 @@ html, body, [class*="css"] {
 
 /* ── Read link ───────────────────────────────────────────────────────────── */
 .read-link a {
-    color: #3DC98A;
+    color: #1A56DB;
     font-size: 0.85rem;
     font-weight: 500;
     text-decoration: none;
@@ -157,7 +157,7 @@ html, body, [class*="css"] {
 
 /* ── Buttons ─────────────────────────────────────────────────────────────── */
 div[data-testid="stButton"] > button {
-    background-color: #3DC98A;
+    background-color: #1A56DB;
     color: #FFFFFF;
     border: none;
     border-radius: 6px;
@@ -167,7 +167,37 @@ div[data-testid="stButton"] > button {
     width: 100%;
 }
 div[data-testid="stButton"] > button:hover {
-    background-color: #2AAF76;
+    background-color: #1446B8;
+}
+
+/* ── Helicap green: multiselect tags + slider only ───────────────────────── */
+/* Selected category pills */
+span[data-baseweb="tag"],
+[data-testid="stMultiSelectTag"] {
+    background-color: #3DC98A !important;
+    border-color: #3DC98A !important;
+}
+span[data-baseweb="tag"] span,
+[data-testid="stMultiSelectTag"] span {
+    color: #FFFFFF !important;
+}
+/* Slider filled track */
+[data-testid="stSlider"] [data-baseweb="slider"] [role="slider"],
+[data-testid="stSlider"] div[class*="SliderTrack"] div,
+[data-testid="stSlider"] [data-testid="stSliderTrackFill"] {
+    background-color: #3DC98A !important;
+    border-color: #3DC98A !important;
+}
+/* Slider thumb (circle) */
+[data-testid="stSlider"] [role="slider"] {
+    background-color: #3DC98A !important;
+    border-color: #3DC98A !important;
+    box-shadow: 0 0 0 4px rgba(61,201,138,0.20) !important;
+}
+/* Slider value number */
+[data-testid="stSlider"] [data-testid="stSliderThumbValue"],
+[data-testid="stSlider"] p {
+    color: #3DC98A !important;
 }
 
 /* ── Footer ──────────────────────────────────────────────────────────────── */
@@ -331,24 +361,31 @@ st.markdown("""
         <h1><span>🔵</span><span>Helicap News</span></h1>
         <div class="header-tagline">Stay informed. Stay ahead.</div>
     </div>
-    <!-- Helicap hexagon logo (right side) -->
-    <svg width="62" height="62" viewBox="0 0 60 60" fill="none"
-         xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0; opacity:0.85;">
-        <!-- Outer hexagon -->
-        <polygon points="56,30 43,7.5 17,7.5 4,30 17,52.5 43,52.5"
-                 stroke="rgba(255,255,255,0.80)" stroke-width="2.2" fill="none"/>
-        <!-- Inner hexagon -->
-        <polygon points="48,30 39,14.4 21,14.4 12,30 21,45.6 39,45.6"
-                 stroke="rgba(255,255,255,0.50)" stroke-width="1.4" fill="none"/>
-        <!-- H — left bar -->
-        <rect x="19.5" y="20" width="5.5" height="20" rx="0.5"
-              fill="rgba(255,255,255,0.88)"/>
-        <!-- H — right bar -->
-        <rect x="35" y="20" width="5.5" height="20" rx="0.5"
-              fill="rgba(255,255,255,0.88)"/>
-        <!-- H — crossbar -->
-        <rect x="25" y="28.5" width="10" height="3.5" rx="0.5"
-              fill="rgba(255,255,255,0.88)"/>
+    <!-- Helicap hexagon logo (right side) — flat-top hex, double ring, H+brackets -->
+    <svg width="68" height="68" viewBox="0 0 100 100"
+         xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;">
+        <!-- Layer 1: outer white hex -->
+        <polygon points="96,50 73,10 27,10 4,50 27,90 73,90" fill="white"/>
+        <!-- Layer 2: navy cutout → creates outer white ring -->
+        <polygon points="89,50 68,15 32,15 11,50 32,85 68,85" fill="#0D1F3C"/>
+        <!-- Layer 3: inner white ring -->
+        <polygon points="85,50 65,19 35,19 15,50 35,81 65,81" fill="white"/>
+        <!-- Layer 4: navy inner area → creates thin inner ring -->
+        <polygon points="80,50 62,22 38,22 20,50 38,78 62,78" fill="#0D1F3C"/>
+        <!-- H left vertical bar -->
+        <rect x="31" y="26" width="11" height="48" fill="white"/>
+        <!-- H right vertical bar -->
+        <rect x="58" y="26" width="11" height="48" fill="white"/>
+        <!-- Top-left bracket arm -->
+        <rect x="20" y="26" width="11" height="11" fill="white"/>
+        <!-- Bottom-left bracket arm -->
+        <rect x="20" y="63" width="11" height="11" fill="white"/>
+        <!-- Top-right bracket arm -->
+        <rect x="69" y="26" width="11" height="11" fill="white"/>
+        <!-- Bottom-right bracket arm -->
+        <rect x="69" y="63" width="11" height="11" fill="white"/>
+        <!-- H crossbar -->
+        <rect x="42" y="44" width="16" height="12" fill="white"/>
     </svg>
 </div>
 """, unsafe_allow_html=True)
