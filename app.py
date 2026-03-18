@@ -111,11 +111,11 @@ html, body, [class*="css"] {
 
 /* ── Article card ────────────────────────────────────────────────────────── */
 .article-card {
-    background-color: #E8F9F2;
+    background-color: #EBF2FF;
     border-radius: 8px;
     padding: 1rem 1.25rem;
     margin-bottom: 0.75rem;
-    border-left: 4px solid #3DC98A;
+    border-left: 4px solid #1A56DB;
 }
 .article-title {
     font-family: 'DM Sans', sans-serif;
@@ -136,7 +136,7 @@ html, body, [class*="css"] {
     line-height: 1.5;
 }
 .sentiment-positive { color: #F0A500; font-weight: 600; font-size: 0.82rem; }
-.sentiment-negative { color: #3DC98A; font-weight: 600; font-size: 0.82rem; }
+.sentiment-negative { color: #E63946; font-weight: 600; font-size: 0.82rem; }
 .sentiment-neutral  { color: #6B7280; font-weight: 600; font-size: 0.82rem; }
 
 .no-articles {
@@ -148,7 +148,7 @@ html, body, [class*="css"] {
 
 /* ── Read link ───────────────────────────────────────────────────────────── */
 .read-link a {
-    color: #3DC98A;
+    color: #1A56DB;
     font-size: 0.85rem;
     font-weight: 500;
     text-decoration: none;
@@ -157,7 +157,7 @@ html, body, [class*="css"] {
 
 /* ── Buttons ─────────────────────────────────────────────────────────────── */
 div[data-testid="stButton"] > button {
-    background-color: #3DC98A;
+    background-color: #1A56DB;
     color: #FFFFFF;
     border: none;
     border-radius: 6px;
@@ -167,7 +167,7 @@ div[data-testid="stButton"] > button {
     width: 100%;
 }
 div[data-testid="stButton"] > button:hover {
-    background-color: #2AAF76;
+    background-color: #1446B8;
 }
 
 /* ── Footer ──────────────────────────────────────────────────────────────── */
