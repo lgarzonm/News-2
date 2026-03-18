@@ -37,7 +37,7 @@ html, body, [class*="css"] {
     padding: 1.2rem 2rem;
     border-radius: 8px;
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
     margin-bottom: 1.5rem;
 }
@@ -47,12 +47,17 @@ html, body, [class*="css"] {
     font-size: 1.8rem;
     font-weight: 700;
     margin: 0 0 0.15rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
 }
+/* Tagline indented to align with the "H" in Helicap (skips icon + gap) */
 .header-tagline {
     color: #7B93B8;
     font-size: 0.95rem;
     font-style: italic;
     font-family: 'Inter', sans-serif;
+    padding-left: 2.35rem;   /* ≈ emoji width (1.8rem) + gap (0.45rem) + tiny buffer */
 }
 
 /* ── Sidebar credit block ────────────────────────────────────────────────── */
@@ -73,7 +78,7 @@ html, body, [class*="css"] {
 .sidebar-credit .credit-name {
     color: #FFFFFF;
     font-family: 'DM Sans', sans-serif;
-    font-size: 1.25rem;
+    font-size: 1.0rem;       /* ↓ slightly smaller than before */
     font-weight: 700;
     line-height: 1.2;
 }
@@ -81,10 +86,14 @@ html, body, [class*="css"] {
 /* ── Sidebar last-updated ────────────────────────────────────────────────── */
 .sidebar-updated {
     color: #6B7280;
-    font-size: 0.78rem;
+    font-size: 0.88rem;      /* ↑ more readable */
     text-align: center;
-    line-height: 1.6;
+    line-height: 1.7;
     margin-bottom: 0.25rem;
+}
+.sidebar-updated strong {
+    font-size: 0.92rem;
+    color: #374151;
 }
 
 /* ── Category badge ──────────────────────────────────────────────────────── */
@@ -102,11 +111,11 @@ html, body, [class*="css"] {
 
 /* ── Article card ────────────────────────────────────────────────────────── */
 .article-card {
-    background-color: #EBF2FF;
+    background-color: #E8F9F2;
     border-radius: 8px;
     padding: 1rem 1.25rem;
     margin-bottom: 0.75rem;
-    border-left: 4px solid #1A56DB;
+    border-left: 4px solid #3DC98A;
 }
 .article-title {
     font-family: 'DM Sans', sans-serif;
@@ -127,7 +136,7 @@ html, body, [class*="css"] {
     line-height: 1.5;
 }
 .sentiment-positive { color: #F0A500; font-weight: 600; font-size: 0.82rem; }
-.sentiment-negative { color: #E63946; font-weight: 600; font-size: 0.82rem; }
+.sentiment-negative { color: #3DC98A; font-weight: 600; font-size: 0.82rem; }
 .sentiment-neutral  { color: #6B7280; font-weight: 600; font-size: 0.82rem; }
 
 .no-articles {
@@ -139,7 +148,7 @@ html, body, [class*="css"] {
 
 /* ── Read link ───────────────────────────────────────────────────────────── */
 .read-link a {
-    color: #1A56DB;
+    color: #3DC98A;
     font-size: 0.85rem;
     font-weight: 500;
     text-decoration: none;
@@ -148,7 +157,7 @@ html, body, [class*="css"] {
 
 /* ── Buttons ─────────────────────────────────────────────────────────────── */
 div[data-testid="stButton"] > button {
-    background-color: #1A56DB;
+    background-color: #3DC98A;
     color: #FFFFFF;
     border: none;
     border-radius: 6px;
@@ -158,7 +167,7 @@ div[data-testid="stButton"] > button {
     width: 100%;
 }
 div[data-testid="stButton"] > button:hover {
-    background-color: #1446B8;
+    background-color: #2AAF76;
 }
 
 /* ── Footer ──────────────────────────────────────────────────────────────── */
@@ -319,9 +328,28 @@ with st.sidebar:
 st.markdown("""
 <div class="helicap-header">
     <div>
-        <h1>🔵 Helicap News</h1>
+        <h1><span>🔵</span><span>Helicap News</span></h1>
         <div class="header-tagline">Stay informed. Stay ahead.</div>
     </div>
+    <!-- Helicap hexagon logo (right side) -->
+    <svg width="62" height="62" viewBox="0 0 60 60" fill="none"
+         xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0; opacity:0.85;">
+        <!-- Outer hexagon -->
+        <polygon points="56,30 43,7.5 17,7.5 4,30 17,52.5 43,52.5"
+                 stroke="rgba(255,255,255,0.80)" stroke-width="2.2" fill="none"/>
+        <!-- Inner hexagon -->
+        <polygon points="48,30 39,14.4 21,14.4 12,30 21,45.6 39,45.6"
+                 stroke="rgba(255,255,255,0.50)" stroke-width="1.4" fill="none"/>
+        <!-- H — left bar -->
+        <rect x="19.5" y="20" width="5.5" height="20" rx="0.5"
+              fill="rgba(255,255,255,0.88)"/>
+        <!-- H — right bar -->
+        <rect x="35" y="20" width="5.5" height="20" rx="0.5"
+              fill="rgba(255,255,255,0.88)"/>
+        <!-- H — crossbar -->
+        <rect x="25" y="28.5" width="10" height="3.5" rx="0.5"
+              fill="rgba(255,255,255,0.88)"/>
+    </svg>
 </div>
 """, unsafe_allow_html=True)
 
