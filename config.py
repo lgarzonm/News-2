@@ -56,9 +56,10 @@ CATEGORIES = {
         "fiscal", "debt default",
     ],
     "💳 Alternative Lending": [
-        "private credit", "private debt", "direct lending",
-        "alternative lending", "SME loans", "non-bank lending",
-        "asset-backed", "credit fund", "lending platform",
+        "private credit", "private debt", "private fund",
+        "direct lending", "alternative lending", "private markets",
+        "SME loans", "non-bank lending", "credit fund",
+        "asset-backed", "lending platform",
         "structured finance", "loan portfolio",
     ],
     "💻 Fintech": [
@@ -320,7 +321,8 @@ TITLE_REQUIRED_TERMS = {
     ],
     "💳 Alternative Lending": [
         "lending", "loan", "credit", "financi", "private debt", "private credit",
-        "sme", "non-bank", "asset-backed", "structured finance",
+        "private fund", "private market", "sme", "non-bank", "asset-backed",
+        "structured finance", "fund", "invest",
     ],
     "💻 Fintech": [
         "fintech", "bank", "payment", "crypto", "blockchain", "digital",
@@ -416,7 +418,8 @@ RSS_FEEDS = {
     ],
     "💳 Alternative Lending": [
         "https://www.altfi.com/feed",
-        "https://feeds.reuters.com/reuters/businessNews",  # covers Deutsche Bank / private credit stories
+        "https://www.privatedebtinvestor.com/feed/",       # specialist private credit/debt publication
+        "https://feeds.reuters.com/reuters/businessNews",  # covers private credit stories broadly
     ],
     "🎭 Entertainment (Singapore)": [
         "https://www.timeout.com/singapore/feed/rss",        # Time Out Singapore — primary source

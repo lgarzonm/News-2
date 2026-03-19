@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+import io
 import pandas as pd
 import streamlit as st
 
@@ -244,6 +245,87 @@ def _build_dataframe(results: dict) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def _build_newsletter_excel(results: dict, run_date: str) -> bytes:
+    """
+    Generate a formatted Excel workbook matching the newsletter template:
+    - Category header rows (navy background, white bold text)
+    - One row per article: bullet title in col A, clickable URL in col B
+    Returns the file as bytes for st.download_button.
+    """
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill, Alignment
+
+    NAVY   = "0D1F3C"
+    BLUE   = "D6E4F7"   # light blue for alternating article rows
+    WHITE  = "FFFFFF"
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Helicap News"
+
+    # Column widths
+    ws.column_dimensions["A"].width = 80
+    ws.column_dimensions["B"].width = 45
+
+    # Top header
+    ws.append([f"Helicap News  ·  {run_date}", ""])
+    hdr = ws[1]
+    for cell in hdr:
+        cell.font      = Font(name="Calibri", bold=True, size=13, color=WHITE)
+        cell.fill      = PatternFill("solid", fgColor=NAVY)
+        cell.alignment = Alignment(vertical="center")
+    ws.row_dimensions[1].height = 22
+    ws.merge_cells("A1:B1")
+    ws.append([])   # blank spacer
+
+    row_idx = 3
+    for category, articles in results.items():
+        real = [a for a in articles if "_error" not in a and a.get("title")]
+        # Category header
+        cat_label = category.replace("(", "").replace(")", "").strip()
+        ws.cell(row=row_idx, column=1, value=cat_label)
+        ws.cell(row=row_idx, column=2, value="")
+        for col in (1, 2):
+            c = ws.cell(row=row_idx, column=col)
+            c.font      = Font(name="Calibri", bold=True, size=11, color=WHITE)
+            c.fill      = PatternFill("solid", fgColor="1A3A5C")
+            c.alignment = Alignment(vertical="center")
+        ws.row_dimensions[row_idx].height = 18
+        row_idx += 1
+
+        if not real:
+            ws.cell(row=row_idx, column=1, value="   No recent articles found in the last 24 hours.")
+            ws.cell(row=row_idx, column=1).font = Font(name="Calibri", italic=True, color="6B7280")
+            row_idx += 1
+        else:
+            fill_toggle = False
+            for a in real:
+                title = a.get("title", "")
+                url   = a.get("url", "#")
+                fill_bg = BLUE if fill_toggle else WHITE
+
+                title_cell = ws.cell(row=row_idx, column=1, value=f"  •  {title}")
+                title_cell.font      = Font(name="Calibri", size=10)
+                title_cell.fill      = PatternFill("solid", fgColor=fill_bg)
+                title_cell.alignment = Alignment(wrap_text=True, vertical="center")
+
+                link_cell = ws.cell(row=row_idx, column=2, value="Open article →")
+                link_cell.hyperlink  = url
+                link_cell.font       = Font(name="Calibri", size=10, color="1A56DB", underline="single")
+                link_cell.fill       = PatternFill("solid", fgColor=fill_bg)
+                link_cell.alignment  = Alignment(vertical="center")
+
+                ws.row_dimensions[row_idx].height = 28
+                fill_toggle = not fill_toggle
+                row_idx += 1
+
+        row_idx += 1   # blank row between categories
+
+    buf = io.BytesIO()
+    wb.save(buf)
+    return buf.getvalue()
+
+
 # ---------------------------------------------------------------------------
 # Sidebar
 # ---------------------------------------------------------------------------
@@ -423,15 +505,24 @@ else:
 
         st.markdown("<br>", unsafe_allow_html=True)
 
-    # CSV download
-    df = _build_dataframe(results)
+    # Downloads
     run_date = datetime.now(SGT).strftime("%Y-%m-%d")
-    st.download_button(
-        label="⬇ Download CSV",
-        data=df.to_csv(index=False).encode("utf-8"),
-        file_name=f"helicap_news_{run_date}.csv",
-        mime="text/csv",
-    )
+    col_xl, col_csv = st.columns(2)
+    with col_xl:
+        st.download_button(
+            label="⬇ Download Newsletter (Excel)",
+            data=_build_newsletter_excel(results, run_date),
+            file_name=f"helicap_news_{run_date}.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+    with col_csv:
+        df = _build_dataframe(results)
+        st.download_button(
+            label="⬇ Download Full CSV",
+            data=df.to_csv(index=False).encode("utf-8"),
+            file_name=f"helicap_news_{run_date}.csv",
+            mime="text/csv",
+        )
 
 
 # ---------------------------------------------------------------------------
