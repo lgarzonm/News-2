@@ -262,6 +262,7 @@ def _build_newsletter_excel(results: dict, run_date: str) -> bytes:
     wb = Workbook()
     ws = wb.active
     ws.title = "Helicap News"
+    ws.sheet_view.showGridLines = False
 
     # Column widths
     ws.column_dimensions["A"].width = 80
