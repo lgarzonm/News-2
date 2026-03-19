@@ -262,6 +262,7 @@ def _build_newsletter_excel(results: dict, run_date: str) -> bytes:
     wb = Workbook()
     ws = wb.active
     ws.title = "Helicap News"
+    ws.sheet_view.showGridLines = False
 
     # Column widths
     ws.column_dimensions["A"].width = 80
@@ -309,7 +310,8 @@ def _build_newsletter_excel(results: dict, run_date: str) -> bytes:
                 title_cell.fill      = PatternFill("solid", fgColor=fill_bg)
                 title_cell.alignment = Alignment(wrap_text=True, vertical="center")
 
-                link_cell = ws.cell(row=row_idx, column=2, value="Open article →")
+                source_label = a.get("source", "") or "Open article"
+                link_cell = ws.cell(row=row_idx, column=2, value=source_label)
                 link_cell.hyperlink  = url
                 link_cell.font       = Font(name="Calibri", size=10, color="1A56DB", underline="single")
                 link_cell.fill       = PatternFill("solid", fgColor=fill_bg)
